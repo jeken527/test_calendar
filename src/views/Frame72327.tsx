@@ -33,20 +33,14 @@ const HOLIDAY_CALENDARS: Record<string, string> = {
 
 const Frame72327 = () => {
     // ----------------------------------------------------
-    // 1. 유저 원본 메뉴 상태
+    // 1. 호버(마우스 올림) 전용 상태 관리 (완벽 복원)
     // ----------------------------------------------------
+    const [hoveredMenu, setHoveredMenu] = useState<string | null>(null);
+    const [hoveredRegion, setHoveredRegion] = useState<string | null>(null);
+    const [hoveredDateStr, setHoveredDateStr] = useState<string | null>(null);
+    const [hoveredModalBtn, setHoveredModalBtn] = useState<string | null>(null);
+
     const [regionmenu_52_20, setRegionmenu_52_20] = useState("False");
-    const [button1state_2_188, setButton1state_2_188] = useState("default");
-    const [button1state_2_170, setButton1state_2_170] = useState("default");
-    const [button1state_2_176, setButton1state_2_176] = useState("default");
-    const [button1state_2_186, setButton1state_2_186] = useState("default");
-    const [button1state_58_13, setButton1state_58_13] = useState("default");
-    const [button1state_129_172, setButton1state_129_172] = useState("default");
-    const [transitionConfig52_20, setTransitionConfig52_20] = useState<any>({});
-    
-    // 모달창 OK / DELETE 버튼 상태
-    const [button1state_107_429, setButton1state_107_429] = useState("default");
-    const [button1state_120_141, setButton1state_120_141] = useState("default");
 
     // ----------------------------------------------------
     // 2. 엔진 상태 (데이터 및 팝업창 컨트롤)
@@ -58,17 +52,17 @@ const Frame72327 = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const tokenClientRef = useRef<any>(null);
 
-    // 🎯 1번 모달: 일정 추가
+    // 🎯 1번 모달: 일정 추가 (EDIT 버튼 및 빈 날짜 클릭 시)
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [eventTitle, setEventTitle] = useState("");
     const [eventStartDate, setEventStartDate] = useState("");
     const [eventEndDate, setEventEndDate] = useState("");
     const [eventMemo, setEventMemo] = useState("");
 
-    // 🎯 2번 모달: 일정 확인/삭제
+    // 🎯 2번 모달: 일정 확인/삭제 (휴일 및 내 일정 클릭 시)
     const [viewModalData, setViewModalData] = useState<{ isOpen: boolean; eventId?: string; title: string; isHoliday: boolean }>({ isOpen: false, title: "", isHoliday: false });
 
-    // 🎯 3번 모달: SEARCH 팝업창
+    // 🎯 3번 모달: SEARCH 검색 팝업창
     const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const searchResults = searchQuery.trim() ? events.filter(e => e.summary?.toLowerCase().includes(searchQuery.toLowerCase())) : [];
@@ -172,7 +166,7 @@ const Frame72327 = () => {
     };
 
     // ----------------------------------------------------
-    // 달력 렌더링
+    // 달력 렌더링 (호버 효과 완벽 적용)
     // ----------------------------------------------------
     const getGridDates = (year: number, month: number) => {
         const grid = [];
@@ -203,52 +197,54 @@ const Frame72327 = () => {
         const dateStr = item.date.toISOString().split("T")[0];
         
         if (!item.isCurrentMonth) {
-            return <Datecomponents key={idx} datestates="disable" slot_62_37={<p style={pStyle}>{day}</p>} />;
+            return (
+                <div key={idx} style={{ display: "contents" }}>
+                    <Datecomponents datestates="disable" slot_62_37={<p style={pStyle}>{day}</p>} />
+                </div>
+            );
         }
         
         const state = getDateState(item.date, true);
-        
-        if (state === "holiday") {
-            return (
-                <div key={idx} onClick={(e) => { 
-                    e.stopPropagation(); 
-                    const hol = holidays.find(h => (h.start?.date || h.start?.dateTime?.split("T")[0]) === dateStr);
-                    setViewModalData({ isOpen: true, title: hol?.summary || "공휴일", isHoliday: true }); 
-                }} style={{cursor:"pointer"}}>
-                    <Dateselectbutton2 dateselectnew2="holiday" slot_146_537={
-                        <Datecomponents datestates="holiday" slot_62_28={<p style={pStyle}>{day}</p>} />
-                    } />
-                </div>
-            );
-        }
-        if (state === "my schedule") {
-            return (
-                <div key={idx} onClick={(e) => { 
-                    e.stopPropagation(); 
-                    const evnt = events.find(e => (e.start?.date || e.start?.dateTime?.split("T")[0]) === dateStr);
-                    setViewModalData({ isOpen: true, eventId: evnt?.id, title: evnt?.summary || "일정", isHoliday: false }); 
-                }} style={{cursor:"pointer"}}>
-                    <Dateselectbutton2 dateselectnew2="my schedule" slot_146_536={
-                        <Datecomponents datestates="my schedule" slot_135_168={<p style={pStyle}>{day}</p>} />
-                    } />
-                </div>
-            );
-        }
+        const isHovered = hoveredDateStr === dateStr;
+        const visualState = isHovered ? "checked" : state; // 호버 시 checked 상태 주입
+        const isSpecial = state === "holiday" || state === "my schedule";
 
-        if (state === "today") {
-            return (
-                <div key={idx} onClick={() => openAddModal(dateStr)} style={{cursor:"pointer"}}>
-                    <Dateselectbutton1 dateselectbutton="today" slot_146_414={
-                        <Datecomponents datestates="today" slot_62_31={<p style={pStyle}>{day}</p>} />
-                    } />
-                </div>
-            );
-        }
+        const handleDateClick = (e: any) => {
+            e.stopPropagation();
+            if (state === "holiday") {
+                const hol = holidays.find(h => (h.start?.date || h.start?.dateTime?.split("T")[0]) === dateStr);
+                setViewModalData({ isOpen: true, title: hol?.summary || "공휴일", isHoliday: true }); 
+            } else if (state === "my schedule") {
+                const evnt = events.find(e => (e.start?.date || e.start?.dateTime?.split("T")[0]) === dateStr);
+                setViewModalData({ isOpen: true, eventId: evnt?.id, title: evnt?.summary || "일정", isHoliday: false }); 
+            } else {
+                openAddModal(dateStr);
+            }
+        };
+
         return (
-            <div key={idx} onClick={() => openAddModal(dateStr)} style={{cursor:"pointer"}}>
-                <Dateselectbutton1 dateselectbutton="default" slot_146_413={
-                    <Datecomponents datestates="default" slot_60_22={<p style={pStyle}>{day}</p>} />
-                } />
+            <div 
+                key={idx} 
+                onClick={handleDateClick}
+                onMouseEnter={() => setHoveredDateStr(dateStr)} 
+                onMouseLeave={() => setHoveredDateStr(null)}
+                style={{ cursor: "pointer", display: "contents" }}
+            >
+                {/* 호버 상태에 따라 모든 텍스트 슬롯을 방어적으로 렌더링 (깜빡임 방지) */}
+                {isSpecial ? (
+                    <Dateselectbutton2 dateselectnew2={state} 
+                        slot_146_537={<Datecomponents datestates={visualState} slot_62_28={<p style={pStyle}>{day}</p>} slot_60_25={<p style={pStyle}>{day}</p>} />} 
+                        slot_146_536={<Datecomponents datestates={visualState} slot_135_168={<p style={pStyle}>{day}</p>} slot_60_25={<p style={pStyle}>{day}</p>} />} 
+                    />
+                ) : state === "today" ? (
+                    <Dateselectbutton1 dateselectbutton="today" slot_146_414={
+                        <Datecomponents datestates={visualState} slot_62_31={<p style={pStyle}>{day}</p>} slot_60_25={<p style={pStyle}>{day}</p>} />
+                    } />
+                ) : (
+                    <Dateselectbutton1 dateselectbutton="default" slot_146_413={
+                        <Datecomponents datestates={visualState} slot_60_22={<p style={pStyle}>{day}</p>} slot_60_25={<p style={pStyle}>{day}</p>} />
+                    } />
+                )}
             </div>
         );
     };
@@ -297,82 +293,66 @@ const Frame72327 = () => {
                             </div>
                         </div>
 
-                        {/* 🎯 메뉴 툴바 영역 (상자 걷어내고 직접 클릭 연동 완료!) 🎯 */}
+                        {/* 🎯 메뉴 툴바 (투명 상자 제거 완료 & 호버/클릭 정밀 연결) 🎯 */}
                         <div id="52_30" className="Pixso-frame-52_30" style={{ position: "relative", zIndex: 9000, overflow: "visible" }}>
                             <div className="frame-content-52_30">
                                 
                                 <Regionmenu
                                     id="52_20" className="Pixso-instance-52_20" regionmenu={regionmenu_52_20}
                                     slot_97_144={
-                                        <Button1components
-                                            id="2_188" className="Pixso-instance-2_188" button1state={button1state_2_188}
-                                            mouseover={() => setButton1state_2_188("checked")}
-                                            slot_45_10={
-                                                <p id="2_189" className="Pixso-paragraph-2_189" style={{cursor:"pointer", pointerEvents:"auto"}} onClick={(e) => { e.stopPropagation(); setRegionmenu_52_20("True"); }}>
-                                                    {"REGION"}
-                                                </p>
-                                            }
-                                        />
+                                        <div onClick={(e) => { e.stopPropagation(); setRegionmenu_52_20("True"); }} onMouseEnter={() => setHoveredMenu("REGION")} onMouseLeave={() => setHoveredMenu(null)} style={{ cursor: "pointer", pointerEvents: "auto", display: "contents" }}>
+                                            <Button1components id="2_188" className="Pixso-instance-2_188" button1state={hoveredMenu === "REGION" ? "checked" : "default"} slot_45_10={<p id="2_189" className="Pixso-paragraph-2_189" style={{pointerEvents:"none"}}>{"REGION"}</p>} />
+                                        </div>
                                     }
                                     slot_97_159={
-                                        <Button1components
-                                            id="2_188_exp" className="Pixso-instance-2_188" button1state="checked"
-                                            slot_45_10={
-                                                <p id="2_189_exp" className="Pixso-paragraph-2_189" style={{cursor:"pointer", pointerEvents:"auto"}} onClick={(e) => { e.stopPropagation(); setRegionmenu_52_20("False"); }}>
-                                                    {"REGION"}
-                                                </p>
-                                            }
-                                        />
+                                        <div onClick={(e) => { e.stopPropagation(); setRegionmenu_52_20("False"); }} onMouseEnter={() => setHoveredMenu("REGION_EXP")} onMouseLeave={() => setHoveredMenu(null)} style={{ cursor: "pointer", pointerEvents: "auto", display: "contents" }}>
+                                            <Button1components id="2_188_exp" className="Pixso-instance-2_188" button1state={hoveredMenu === "REGION_EXP" ? "checked" : "default"} slot_45_10={<p id="2_189_exp" className="Pixso-paragraph-2_189" style={{pointerEvents:"none"}}>{"REGION"}</p>} />
+                                        </div>
                                     }
-                                    slot_97_161={<Button2components button2state="default" slot_77_120={<p id="77_120_kr" className="Pixso-paragraph-77_120" style={{cursor:"pointer", pointerEvents:"auto"}} onClick={(e) => { e.stopPropagation(); setSelectedRegion("KR"); setRegionmenu_52_20("False"); }}>{"KOREA"}</p>} />}
-                                    slot_97_162={<Button2components button2state="default" slot_77_120={<p id="77_120_jp" className="Pixso-paragraph-77_120" style={{cursor:"pointer", pointerEvents:"auto"}} onClick={(e) => { e.stopPropagation(); setSelectedRegion("JP"); setRegionmenu_52_20("False"); }}>{"JAPAN"}</p>} />}
-                                    slot_97_163={<Button2components button2state="default" slot_77_120={<p id="77_120_us" className="Pixso-paragraph-77_120" style={{cursor:"pointer", pointerEvents:"auto"}} onClick={(e) => { e.stopPropagation(); setSelectedRegion("US"); setRegionmenu_52_20("False"); }}>{"AMERICA"}</p>} />}
+                                    slot_97_161={
+                                        <div onClick={(e) => { e.stopPropagation(); setSelectedRegion("KR"); setRegionmenu_52_20("False"); }} onMouseEnter={() => setHoveredRegion("KR")} onMouseLeave={() => setHoveredRegion(null)} style={{ cursor: "pointer", pointerEvents: "auto", display: "contents" }}>
+                                            <Button2components button2state={hoveredRegion === "KR" ? "checked" : "default"} slot_77_120={<p id="77_120_kr" className="Pixso-paragraph-77_120" style={{pointerEvents:"none"}}>{"KOREA"}</p>} />
+                                        </div>
+                                    }
+                                    slot_97_162={
+                                        <div onClick={(e) => { e.stopPropagation(); setSelectedRegion("JP"); setRegionmenu_52_20("False"); }} onMouseEnter={() => setHoveredRegion("JP")} onMouseLeave={() => setHoveredRegion(null)} style={{ cursor: "pointer", pointerEvents: "auto", display: "contents" }}>
+                                            <Button2components button2state={hoveredRegion === "JP" ? "checked" : "default"} slot_77_120={<p id="77_120_jp" className="Pixso-paragraph-77_120" style={{pointerEvents:"none"}}>{"JAPAN"}</p>} />
+                                        </div>
+                                    }
+                                    slot_97_163={
+                                        <div onClick={(e) => { e.stopPropagation(); setSelectedRegion("US"); setRegionmenu_52_20("False"); }} onMouseEnter={() => setHoveredRegion("US")} onMouseLeave={() => setHoveredRegion(null)} style={{ cursor: "pointer", pointerEvents: "auto", display: "contents" }}>
+                                            <Button2components button2state={hoveredRegion === "US" ? "checked" : "default"} slot_77_120={<p id="77_120_us" className="Pixso-paragraph-77_120" style={{pointerEvents:"none"}}>{"AMERICA"}</p>} />
+                                        </div>
+                                    }
                                 />
 
-                                {/* EDIT 기능 다이렉트 연결 (일정 추가 창) */}
+                                {/* EDIT 기능 (일정 추가 모달) */}
                                 <Editmenu
                                     id="52_23" className="Pixso-instance-52_23" editmenu="False"
                                     slot_107_320={
-                                        <Button1components
-                                            id="2_170" className="Pixso-instance-2_170" button1state={button1state_2_170}
-                                            mouseover={() => setButton1state_2_170("checked")}
-                                            slot_45_10={
-                                                <p id="2_171" className="Pixso-paragraph-2_171" onClick={() => openAddModal(new Date().toISOString().split("T")[0])} style={{cursor:"pointer", pointerEvents:"auto"}}>
-                                                    {"EDIT"}
-                                                </p>
-                                            }
-                                        />
+                                        <div onClick={() => openAddModal(new Date().toISOString().split("T")[0])} onMouseEnter={() => setHoveredMenu("EDIT")} onMouseLeave={() => setHoveredMenu(null)} style={{ cursor: "pointer", pointerEvents: "auto", display: "contents" }}>
+                                            <Button1components id="2_170" className="Pixso-instance-2_170" button1state={hoveredMenu === "EDIT" ? "checked" : "default"} slot_45_10={<p id="2_171" className="Pixso-paragraph-2_171" style={{pointerEvents:"none"}}>{"EDIT"}</p>} />
+                                        </div>
                                     }
                                 />
 
-                                {/* SEARCH 기능 다이렉트 연결 (검색 창) */}
+                                {/* SEARCH 기능 (검색 팝업 모달) */}
                                 <Searchmenu 
                                     id="52_26" className="Pixso-instance-52_26" searchmenu="False" 
                                     slot_107_367={
-                                        <Button1components 
-                                            id="2_176" className="Pixso-instance-2_176" button1state={button1state_2_176} 
-                                            mouseover={() => setButton1state_2_176("checked")}
-                                            slot_45_10={
-                                                <p id="2_177" className="Pixso-paragraph-2_177" onClick={() => setIsSearchModalOpen(true)} style={{cursor:"pointer", pointerEvents:"auto"}}>
-                                                    {"SEARCH"}
-                                                </p>
-                                            } 
-                                        />
+                                        <div onClick={() => setIsSearchModalOpen(true)} onMouseEnter={() => setHoveredMenu("SEARCH")} onMouseLeave={() => setHoveredMenu(null)} style={{ cursor: "pointer", pointerEvents: "auto", display: "contents" }}>
+                                            <Button1components id="2_176" className="Pixso-instance-2_176" button1state={hoveredMenu === "SEARCH" ? "checked" : "default"} slot_45_10={<p id="2_177" className="Pixso-paragraph-2_177" style={{pointerEvents:"none"}}>{"SEARCH"}</p>} />
+                                        </div>
                                     } 
                                 />
                                 
+                                {/* RESET 기능 */}
                                 <Resetbutton 
                                     id="52_28" className="Pixso-instance-52_28" resetmenu="default" 
                                     slot_143_265={
-                                        <Button1components 
-                                            id="2_186" className="Pixso-instance-2_186" button1state={button1state_2_186} 
-                                            mouseover={() => setButton1state_2_186("checked")}
-                                            slot_45_10={
-                                                <p id="2_187" className="Pixso-paragraph-2_187" onClick={() => { setCurrentDate(new Date()); setSelectedRegion("KR"); setSearchQuery(""); }} style={{cursor:"pointer", pointerEvents:"auto"}}>
-                                                    {"RESET"}
-                                                </p>
-                                            } 
-                                        />
+                                        <div onClick={() => { setCurrentDate(new Date()); setSelectedRegion("KR"); setSearchQuery(""); }} onMouseEnter={() => setHoveredMenu("RESET")} onMouseLeave={() => setHoveredMenu(null)} style={{ cursor: "pointer", pointerEvents: "auto", display: "contents" }}>
+                                            <Button1components id="2_186" className="Pixso-instance-2_186" button1state={hoveredMenu === "RESET" ? "checked" : "default"} slot_45_10={<p id="2_187" className="Pixso-paragraph-2_187" style={{pointerEvents:"none"}}>{"RESET"}</p>} />
+                                        </div>
                                     } 
                                 />
                             </div>
@@ -421,14 +401,26 @@ const Frame72327 = () => {
                                         <div className="frame-content-68_321">
                                             <div id="66_320" className="Pixso-frame-66_320">
                                                 <div className="frame-content-66_320">
-                                                    <Button1components id="58_13" className="Pixso-instance-58_13" button1state={button1state_58_13} mouseover={() => setButton1state_58_13("checked")} slot_45_10={<p id="2_44" className="Pixso-paragraph-2_44" onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1))} style={{cursor:"pointer", pointerEvents:"auto"}}>{"<"}</p>} />
+                                                    <div 
+                                                        onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1))}
+                                                        onMouseEnter={() => setHoveredMenu("PREV_MONTH")} onMouseLeave={() => setHoveredMenu(null)}
+                                                        style={{ cursor: "pointer", pointerEvents: "auto", display: "contents" }}
+                                                    >
+                                                        <Button1components id="58_13" className="Pixso-instance-58_13" button1state={hoveredMenu === "PREV_MONTH" ? "checked" : "default"} slot_45_10={<p id="2_44" className="Pixso-paragraph-2_44" style={{pointerEvents:"none"}}>{"<"}</p>} />
+                                                    </div>
                                                     <div id="66_208" className="Pixso-frame-66_208">
                                                         <div className="frame-content-66_208">
                                                             <div id="66_209" className="Pixso-frame-66_209"><div className="frame-content-66_209"><p id="66_210" className="Pixso-paragraph-66_210" style={{fontFamily:"Retro Gaming, monospace"}}>{rightDate.getFullYear()}</p></div></div>
                                                             <div id="66_211" className="Pixso-frame-66_211"><div className="frame-content-66_211"><p id="66_212" className="Pixso-paragraph-66_212" style={{fontFamily:"Retro Gaming, monospace"}}>{String(rightDate.getMonth() + 1).padStart(2, '0')}</p></div></div>
                                                         </div>
                                                     </div>
-                                                    <Button1components id="129_172" className="Pixso-instance-129_172" button1state={button1state_129_172} mouseover={() => setButton1state_129_172("checked")} slot_45_10={<p id="2_40" className="Pixso-paragraph-2_40" onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1))} style={{cursor:"pointer", pointerEvents:"auto"}}>{">"}</p>} />
+                                                    <div 
+                                                        onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1))}
+                                                        onMouseEnter={() => setHoveredMenu("NEXT_MONTH")} onMouseLeave={() => setHoveredMenu(null)}
+                                                        style={{ cursor: "pointer", pointerEvents: "auto", display: "contents" }}
+                                                    >
+                                                        <Button1components id="129_172" className="Pixso-instance-129_172" button1state={hoveredMenu === "NEXT_MONTH" ? "checked" : "default"} slot_45_10={<p id="2_40" className="Pixso-paragraph-2_40" style={{pointerEvents:"none"}}>{">"}</p>} />
+                                                    </div>
                                                 </div>
                                             </div>
                                             <div id="66_213" className="Pixso-frame-66_213">
@@ -464,7 +456,7 @@ const Frame72327 = () => {
             </div>
 
             {/* ---------------------------------------------------- */}
-            {/* 🎯 모달 1: 일정 추가 모달창 (Frame107433) 🎯 */}
+            {/* 🎯 모달 1: 일정 추가 모달창 (Frame107433) */}
             {/* ---------------------------------------------------- */}
             {isAddModalOpen && (
                 <div 
@@ -482,11 +474,13 @@ const Frame72327 = () => {
                                                     <p id="107_416" className="Pixso-paragraph-107_416">{"Title"}</p>
                                                 </div>
                                             </div>
-                                            <div onClick={handleSaveEvent} style={{ cursor: "pointer", pointerEvents: "auto" }}>
+                                            <div 
+                                                onClick={handleSaveEvent} onMouseEnter={() => setHoveredModalBtn("ADD_OK")} onMouseLeave={() => setHoveredModalBtn(null)}
+                                                style={{ cursor: "pointer", pointerEvents: "auto", display: "contents" }}
+                                            >
                                                 <Button1components
-                                                    id="107_429" className="Pixso-instance-107_429" button1state={button1state_107_429}
-                                                    mouseover={() => setButton1state_107_429("checked")}
-                                                    slot_45_10={<p id="13_6" className="Pixso-paragraph-13_6">{"OK"}</p>}
+                                                    id="107_429" className="Pixso-instance-107_429" button1state={hoveredModalBtn === "ADD_OK" ? "checked" : "default"}
+                                                    slot_45_10={<p id="13_6" className="Pixso-paragraph-13_6" style={{pointerEvents:"none"}}>{"OK"}</p>}
                                                 />
                                             </div>
                                         </div>
@@ -545,7 +539,7 @@ const Frame72327 = () => {
             )}
 
             {/* ---------------------------------------------------- */}
-            {/* 🎯 모달 2: 일정 확인/삭제 모달창 (Frame120147) 🎯 */}
+            {/* 🎯 모달 2: 일정 확인/삭제 모달창 (Frame120147) */}
             {/* ---------------------------------------------------- */}
             {viewModalData.isOpen && (
                 <div 
@@ -568,11 +562,14 @@ const Frame72327 = () => {
                                         </div>
                                     </div>
                                     {!viewModalData.isHoliday && (
-                                        <div onClick={() => { if (viewModalData.eventId) handleDeleteEvent(viewModalData.eventId); }} style={{ cursor: "pointer", pointerEvents: "auto", marginTop: "12px" }}>
+                                        <div 
+                                            onClick={() => { if (viewModalData.eventId) handleDeleteEvent(viewModalData.eventId); }} 
+                                            onMouseEnter={() => setHoveredModalBtn("DEL")} onMouseLeave={() => setHoveredModalBtn(null)}
+                                            style={{ cursor: "pointer", pointerEvents: "auto", marginTop: "12px", display: "contents" }}
+                                        >
                                             <Button1components
-                                                id="120_141" className="Pixso-instance-120_141" button1state={button1state_120_141}
-                                                mouseover={() => setButton1state_120_141("checked")}
-                                                slot_45_10={<p id="14_14" className="Pixso-paragraph-14_14" style={{ fontFamily: "Retro Gaming, monospace" }}>{"DELETE"}</p>}
+                                                id="120_141" className="Pixso-instance-120_141" button1state={hoveredModalBtn === "DEL" ? "checked" : "default"}
+                                                slot_45_10={<p id="14_14" className="Pixso-paragraph-14_14" style={{ fontFamily: "Retro Gaming, monospace", pointerEvents:"none" }}>{"DELETE"}</p>}
                                             />
                                         </div>
                                     )}
@@ -585,7 +582,7 @@ const Frame72327 = () => {
             )}
 
             {/* ---------------------------------------------------- */}
-            {/* 🎯 모달 3: SEARCH 모달창 (Frame120147 CSS 재활용) 🎯 */}
+            {/* 🎯 모달 3: SEARCH 모달창 (Frame120147 CSS 재활용) */}
             {/* ---------------------------------------------------- */}
             {isSearchModalOpen && (
                 <div 
@@ -631,10 +628,14 @@ const Frame72327 = () => {
                                         )}
                                     </div>
 
-                                    <div style={{ marginTop: "12px", display: "flex", justifyContent: "flex-end" }} onClick={() => setIsSearchModalOpen(false)}>
+                                    <div 
+                                        style={{ marginTop: "12px", display: "flex", justifyContent: "flex-end", cursor:"pointer", display:"contents" }} 
+                                        onClick={() => setIsSearchModalOpen(false)}
+                                        onMouseEnter={() => setHoveredModalBtn("CLOSE")} onMouseLeave={() => setHoveredModalBtn(null)}
+                                    >
                                         <Button1components
-                                            id="search_close" className="Pixso-instance-120_141" button1state="default"
-                                            slot_45_10={<p className="Pixso-paragraph-14_14" style={{ fontFamily: "Retro Gaming, monospace", cursor:"pointer", pointerEvents:"auto" }}>{"CLOSE"}</p>}
+                                            id="search_close" className="Pixso-instance-120_141" button1state={hoveredModalBtn === "CLOSE" ? "checked" : "default"}
+                                            slot_45_10={<p className="Pixso-paragraph-14_14" style={{ fontFamily: "Retro Gaming, monospace", pointerEvents:"none" }}>{"CLOSE"}</p>}
                                         />
                                     </div>
 
