@@ -9,7 +9,7 @@ import Datecomponents from "@/components/Datecomponents";
 import Dateselectbutton1 from "@/components/Dateselectbutton1";
 import Dateselectbutton2 from "@/components/Dateselectbutton2";
 
-// 스타일 시트 임포트 (추가된 CSS 모두 포함)
+// 스타일 시트 임포트
 import "@/styles/Frame72327.css";
 import "@/styles/Frame107433.css"; 
 import "@/styles/Frame97172.css"; 
@@ -58,17 +58,23 @@ const Frame72327 = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const tokenClientRef = useRef<any>(null);
 
-    // 1번 모달: 일정 추가 모달창 (빈 날짜 클릭 시)
+    // 1번 모달: 일정 추가
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [eventTitle, setEventTitle] = useState("");
     const [eventStartDate, setEventStartDate] = useState("");
     const [eventEndDate, setEventEndDate] = useState("");
     const [eventMemo, setEventMemo] = useState("");
 
-    // 2번 모달: 일정 확인/삭제 모달창 (일정 있는 날짜 클릭 시)
+    // 2번 모달: 일정 확인/삭제
     const [viewModalData, setViewModalData] = useState<{ isOpen: boolean; eventId?: string; title: string; isHoliday: boolean }>({ isOpen: false, title: "", isHoliday: false });
 
-    // 구글 API 스크립트 로드
+    // 🎯 3번 모달: SEARCH 팝업창 🎯
+    const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
+    // 검색어에 맞춰 이벤트를 실시간 필터링
+    const searchResults = searchQuery.trim() ? events.filter(e => e.summary?.toLowerCase().includes(searchQuery.toLowerCase())) : [];
+
+    // 구글 API 로드
     useEffect(() => {
         const loadScripts = () => {
             const gapiScript = document.createElement("script");
@@ -108,7 +114,6 @@ const Frame72327 = () => {
         }
     };
 
-    // 실시간 휴일 & 내 일정 데이터 패치
     useEffect(() => {
         if (isAuthenticated) fetchCalendarData();
     }, [isAuthenticated, currentDate, selectedRegion]);
@@ -168,7 +173,7 @@ const Frame72327 = () => {
     };
 
     // ----------------------------------------------------
-    // 달력 렌더링 로직
+    // 달력 렌더링
     // ----------------------------------------------------
     const getGridDates = (year: number, month: number) => {
         const grid = [];
@@ -204,7 +209,6 @@ const Frame72327 = () => {
         
         const state = getDateState(item.date, true);
         
-        // 🎯 일정이 있는 날짜 렌더링 (새로 만든 보기/삭제 모달 연결)
         if (state === "holiday") {
             return (
                 <div key={idx} onClick={(e) => { 
@@ -232,7 +236,6 @@ const Frame72327 = () => {
             );
         }
 
-        // 🎯 일정이 없는 날짜 렌더링 (기존 추가 모달 연결)
         if (state === "today") {
             return (
                 <div key={idx} onClick={() => openAddModal(dateStr)} style={{cursor:"pointer"}}>
@@ -315,8 +318,15 @@ const Frame72327 = () => {
                                     />
                                 </div>
 
-                                <Searchmenu id="52_26" className="Pixso-instance-52_26" searchmenu="False" slot_107_367={<Button1components id="2_176" className="Pixso-instance-2_176" button1state={button1state_2_176} slot_45_10={<p id="2_177" className="Pixso-paragraph-2_177">{"SEARCH"}</p>} />} />
-                                <Resetbutton id="52_28" className="Pixso-instance-52_28" resetmenu="default" slot_143_265={<Button1components id="2_186" className="Pixso-instance-2_186" button1state={button1state_2_186} slot_45_10={<p id="2_187" className="Pixso-paragraph-2_187" onClick={() => { setCurrentDate(new Date()); setSelectedRegion("KR"); }} style={{cursor:"pointer", pointerEvents:"auto"}}>{"RESET"}</p>} />} />
+                                {/* 🎯 SEARCH 메뉴 클릭 시 서치 모달 오픈 연결 🎯 */}
+                                <div onClick={() => setIsSearchModalOpen(true)} style={{cursor:"pointer"}}>
+                                    <Searchmenu 
+                                        id="52_26" className="Pixso-instance-52_26" searchmenu="False" 
+                                        slot_107_367={<Button1components id="2_176" className="Pixso-instance-2_176" button1state={button1state_2_176} slot_45_10={<p id="2_177" className="Pixso-paragraph-2_177" style={{cursor:"pointer", pointerEvents:"auto"}}>{"SEARCH"}</p>} />} 
+                                    />
+                                </div>
+                                
+                                <Resetbutton id="52_28" className="Pixso-instance-52_28" resetmenu="default" slot_143_265={<Button1components id="2_186" className="Pixso-instance-2_186" button1state={button1state_2_186} slot_45_10={<p id="2_187" className="Pixso-paragraph-2_187" onClick={() => { setCurrentDate(new Date()); setSelectedRegion("KR"); setSearchQuery(""); }} style={{cursor:"pointer", pointerEvents:"auto"}}>{"RESET"}</p>} />} />
                             </div>
                         </div>
 
@@ -405,7 +415,9 @@ const Frame72327 = () => {
                 <div className="stroke-72_327"></div>
             </div>
 
-            {/* 🎯 1. 일정 추가 모달창 (빈 날짜 클릭 시 오픈) 🎯 */}
+            {/* ---------------------------------------------------- */}
+            {/* 모달 1: 일정 추가 모달창 */}
+            {/* ---------------------------------------------------- */}
             {isAddModalOpen && (
                 <div 
                     style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", backgroundColor: "rgba(0,0,0,0.6)", zIndex: 9999, display: "flex", justifyContent: "center", alignItems: "center" }}
@@ -484,20 +496,21 @@ const Frame72327 = () => {
                 </div>
             )}
 
-            {/* 🎯 2. 일정 확인/삭제 모달창 (내 일정, 휴일 클릭 시 오픈) 🎯 */}
+            {/* ---------------------------------------------------- */}
+            {/* 모달 2: 일정 확인/삭제 모달창 (Frame120147 원본 CSS 재활용) */}
+            {/* ---------------------------------------------------- */}
             {viewModalData.isOpen && (
                 <div 
                     style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", backgroundColor: "rgba(0,0,0,0.6)", zIndex: 9999, display: "flex", justifyContent: "center", alignItems: "center" }}
                     onClick={() => setViewModalData({ isOpen: false, title: "", isHoliday: false })} 
                 >
-                    <div style={{ width: "auto" }} onClick={(e) => e.stopPropagation()}>
+                    <div style={{ width: "250px" }} onClick={(e) => e.stopPropagation()}>
                         <div id="120_147" className="stroke-wrapper-120_147">
-                            <div className="Pixso-frame-120_147">
+                            <div className="Pixso-frame-120_147" style={{ padding: "12px", justifyContent: "space-between" }}>
                                 <div className="frame-content-120_147">
-                                    <div id="120_146" className="Pixso-frame-120_146">
+                                    <div id="120_146" className="Pixso-frame-120_146" style={{ width: "100%" }}>
                                         <div className="frame-content-120_146">
-                                            {/* 타이틀 또는 '공휴일' 텍스트 표시 영역 */}
-                                            <div id="120_137" className="Pixso-frame-120_137">
+                                            <div id="120_137" className="Pixso-frame-120_137" style={{ width: "100%" }}>
                                                 <div className="frame-content-120_137">
                                                     <p id="119_134" className="Pixso-paragraph-119_134" style={{ fontFamily: "Retro Gaming, DungGeunMo, monospace" }}>
                                                         {viewModalData.title}
@@ -506,9 +519,8 @@ const Frame72327 = () => {
                                             </div>
                                         </div>
                                     </div>
-                                    {/* DELETE 버튼 (휴일이 아닐 때만 노출) */}
                                     {!viewModalData.isHoliday && (
-                                        <div onClick={() => { if (viewModalData.eventId) handleDeleteEvent(viewModalData.eventId); }} style={{ cursor: "pointer", pointerEvents: "auto" }}>
+                                        <div onClick={() => { if (viewModalData.eventId) handleDeleteEvent(viewModalData.eventId); }} style={{ cursor: "pointer", pointerEvents: "auto", marginTop: "12px" }}>
                                             <Button1components
                                                 id="120_141" className="Pixso-instance-120_141" button1state={button1state_120_141}
                                                 mouseover={() => setButton1state_120_141("checked")}
@@ -516,6 +528,76 @@ const Frame72327 = () => {
                                             />
                                         </div>
                                     )}
+                                </div>
+                            </div>
+                            <div className="stroke-120_147"></div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ---------------------------------------------------- */}
+            {/* 🎯 모달 3: SEARCH 모달창 (Frame120147 원본 CSS 재활용) 🎯 */}
+            {/* ---------------------------------------------------- */}
+            {isSearchModalOpen && (
+                <div 
+                    style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", backgroundColor: "rgba(0,0,0,0.6)", zIndex: 9999, display: "flex", justifyContent: "center", alignItems: "center" }}
+                    onClick={() => setIsSearchModalOpen(false)} 
+                >
+                    <div style={{ width: "250px" }} onClick={(e) => e.stopPropagation()}>
+                        <div className="stroke-wrapper-120_147">
+                            <div className="Pixso-frame-120_147" style={{ justifyContent: "flex-start" }}>
+                                <div className="frame-content-120_147" style={{ alignItems: "stretch", padding: "12px" }}>
+                                    
+                                    {/* 1. 타이틀 영역 */}
+                                    <div className="Pixso-frame-120_146" style={{ width: "100%", height: "auto" }}>
+                                        <div className="frame-content-120_146">
+                                            <div className="Pixso-frame-120_137" style={{ width: "100%", padding: "4px" }}>
+                                                <div className="frame-content-120_137">
+                                                    <p className="Pixso-paragraph-119_134" style={{ fontFamily: "Retro Gaming, DungGeunMo, monospace", fontSize: "14px" }}>
+                                                        {"SEARCH RESULT"}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    {/* 2. 검색어 입력창 (레트로 음각 디자인) */}
+                                    <div style={{ marginTop: "10px", border: "2px solid", borderTopColor: "#888", borderLeftColor: "#888", borderBottomColor: "#fff", borderRightColor: "#fff", backgroundColor: "#fff" }}>
+                                        <input 
+                                            autoFocus 
+                                            type="text" 
+                                            placeholder="KEYWORD..." 
+                                            value={searchQuery} 
+                                            onChange={(e) => setSearchQuery(e.target.value)} 
+                                            style={{ width: "100%", padding: "6px", border: "none", outline: "none", fontFamily: "Retro Gaming, DungGeunMo, monospace", fontSize: "12px", boxSizing: "border-box" }} 
+                                        />
+                                    </div>
+
+                                    {/* 3. 검색 결과 목록 (레트로 음각 디자인) */}
+                                    <div style={{ marginTop: "10px", minHeight: "100px", maxHeight: "150px", overflowY: "auto", backgroundColor: "#fff", border: "2px solid", borderTopColor: "#888", borderLeftColor: "#888", borderBottomColor: "#fff", borderRightColor: "#fff", padding: "8px", fontFamily: "DungGeunMo, monospace", fontSize: "12px", boxSizing: "border-box" }}>
+                                        {searchQuery.trim() === "" ? (
+                                            <span style={{ color: "#888" }}>Waiting for input...</span>
+                                        ) : searchResults.length === 0 ? (
+                                            <span style={{ color: "red" }}>NO DATA FOUND.</span>
+                                        ) : (
+                                            searchResults.map((e, i) => (
+                                                <div key={i} style={{ margin: "4px 0", borderBottom: "1px dashed #ccc", paddingBottom: "4px", cursor: "pointer" }}>
+                                                    <span style={{ color: "blue", marginRight: "6px" }}>[{e.start.date || e.start.dateTime?.split("T")[0]}]</span>
+                                                    {e.summary}
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+
+                                    {/* 4. 닫기 버튼 */}
+                                    <div style={{ marginTop: "12px", display: "flex", justifyContent: "flex-end" }} onClick={() => setIsSearchModalOpen(false)}>
+                                        <Button1components
+                                            id="search_close" className="Pixso-instance-120_141" button1state="default"
+                                            slot_45_10={<p className="Pixso-paragraph-14_14" style={{ fontFamily: "Retro Gaming, monospace", cursor:"pointer", pointerEvents:"auto" }}>{"CLOSE"}</p>}
+                                        />
+                                    </div>
+
                                 </div>
                             </div>
                             <div className="stroke-120_147"></div>
