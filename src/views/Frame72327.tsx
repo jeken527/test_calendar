@@ -33,7 +33,7 @@ const HOLIDAY_CALENDARS: Record<string, string> = {
 
 const Frame72327 = () => {
     // ----------------------------------------------------
-    // 1. 유저 원본 메뉴 상태 (드롭다운 열림/닫힘)
+    // 1. 유저 메뉴 상태 (드롭다운 열림/닫힘)
     // ----------------------------------------------------
     const [regionmenu_52_20, setRegionmenu_52_20] = useState("False");
 
@@ -187,7 +187,11 @@ const Frame72327 = () => {
 
     const pStyle = { fontFamily: "Retro Gaming, DungGeunMo, monospace", fontSize: "15px", color: "inherit", margin: 0 };
     
-    // 달력 일자 렌더링 (이 부분은 유저님이 완벽하다고 하신 코드 그대로 보존!)
+    // 코드 길이를 획기적으로 줄여주는 요일 헤더 도우미 함수 (원본 ID 완벽 보존)
+    const DayHeader = ({ cId, pId, text }: { cId: string, pId: string, text: string }) => (
+        <Datecomponents id={cId} className={`Pixso-instance-${cId}`} datestates="day" slot_62_34={<p id={pId} className={`Pixso-paragraph-${pId}`}>{text}</p>} />
+    );
+
     const renderCell = (item: any, idx: number) => {
         const day = String(item.date.getDate());
         const dateStr = item.date.toISOString().split("T")[0];
@@ -301,65 +305,62 @@ const Frame72327 = () => {
                             </div>
                         </div>
 
-                        {/* 🎯 메뉴 툴바 영역 (상자 겹침 방지 & 호버/클릭 정밀 연결 완료!) 🎯 */}
+                        {/* 🎯 메뉴 툴바 영역 (텍스트 유지 호버 효과 적용) 🎯 */}
                         <div id="52_30" className="Pixso-frame-52_30" style={{ position: "relative", zIndex: 9000, overflow: "visible" }}>
                             <div className="frame-content-52_30">
                                 
                                 <Regionmenu
                                     id="52_20" className="Pixso-instance-52_20" regionmenu={regionmenu_52_20}
                                     slot_97_144={
-                                        <div onClick={(e) => { e.stopPropagation(); setRegionmenu_52_20("True"); }} style={{ position: "relative", zIndex: 9999 }}>
-                                            <Button1components className="Pixso-instance-2_188 hover-target" button1state="default" slot_45_10={<p id="2_189" className="Pixso-paragraph-2_189">{"REGION"}</p>} />
+                                        <div onClick={(e) => { e.stopPropagation(); setRegionmenu_52_20("True"); }} style={{ position: "relative", zIndex: 9999, display: "contents" }}>
+                                            <Button1components className="Pixso-instance-2_188 hover-target" button1state="default" slot_45_10={<p id="2_189" className="Pixso-paragraph-2_189" style={{pointerEvents:"none"}}>{"REGION"}</p>} />
                                         </div>
                                     }
                                     slot_97_159={
-                                        <div onClick={(e) => { e.stopPropagation(); setRegionmenu_52_20("False"); }} style={{ position: "relative", zIndex: 9999 }}>
-                                            <Button1components className="Pixso-instance-2_188 hover-target" button1state="default" slot_45_10={<p id="2_189_exp" className="Pixso-paragraph-2_189">{"REGION"}</p>} />
+                                        <div onClick={(e) => { e.stopPropagation(); setRegionmenu_52_20("False"); }} style={{ position: "relative", zIndex: 9999, display: "contents" }}>
+                                            <Button1components className="Pixso-instance-2_188 hover-target" button1state="default" slot_45_10={<p id="2_189_exp" className="Pixso-paragraph-2_189" style={{pointerEvents:"none"}}>{"REGION"}</p>} />
                                         </div>
                                     }
                                     slot_97_161={
-                                        <div onClick={(e) => { e.stopPropagation(); setSelectedRegion("KR"); setRegionmenu_52_20("False"); }} style={{ position: "relative", zIndex: 9999 }}>
-                                            <Button2components className="Pixso-instance-97_161 hover-target" button2state="default" slot_77_120={<p id="77_120_kr" className="Pixso-paragraph-77_120">{"KOREA"}</p>} />
+                                        <div onClick={(e) => { e.stopPropagation(); setSelectedRegion("KR"); setRegionmenu_52_20("False"); }} style={{ position: "relative", zIndex: 9999, display: "contents" }}>
+                                            <Button2components className="Pixso-instance-97_161 hover-target" button2state="default" slot_77_120={<p id="77_120_kr" className="Pixso-paragraph-77_120" style={{pointerEvents:"none"}}>{"KOREA"}</p>} />
                                         </div>
                                     }
                                     slot_97_162={
-                                        <div onClick={(e) => { e.stopPropagation(); setSelectedRegion("JP"); setRegionmenu_52_20("False"); }} style={{ position: "relative", zIndex: 9999 }}>
-                                            <Button2components className="Pixso-instance-97_162 hover-target" button2state="default" slot_77_120={<p id="77_120_jp" className="Pixso-paragraph-77_120">{"JAPAN"}</p>} />
+                                        <div onClick={(e) => { e.stopPropagation(); setSelectedRegion("JP"); setRegionmenu_52_20("False"); }} style={{ position: "relative", zIndex: 9999, display: "contents" }}>
+                                            <Button2components className="Pixso-instance-97_162 hover-target" button2state="default" slot_77_120={<p id="77_120_jp" className="Pixso-paragraph-77_120" style={{pointerEvents:"none"}}>{"JAPAN"}</p>} />
                                         </div>
                                     }
                                     slot_97_163={
-                                        <div onClick={(e) => { e.stopPropagation(); setSelectedRegion("US"); setRegionmenu_52_20("False"); }} style={{ position: "relative", zIndex: 9999 }}>
-                                            <Button2components className="Pixso-instance-97_163 hover-target" button2state="default" slot_77_120={<p id="77_120_us" className="Pixso-paragraph-77_120">{"AMERICA"}</p>} />
+                                        <div onClick={(e) => { e.stopPropagation(); setSelectedRegion("US"); setRegionmenu_52_20("False"); }} style={{ position: "relative", zIndex: 9999, display: "contents" }}>
+                                            <Button2components className="Pixso-instance-97_163 hover-target" button2state="default" slot_77_120={<p id="77_120_us" className="Pixso-paragraph-77_120" style={{pointerEvents:"none"}}>{"AMERICA"}</p>} />
                                         </div>
                                     }
                                 />
 
-                                {/* 🎯 가장 확실한 EDIT 기능 다이렉트 연결 (클릭 가림막 원천 차단) 🎯 */}
                                 <Editmenu
                                     id="52_23" className="Pixso-instance-52_23" editmenu="False"
                                     slot_107_320={
-                                        <div onClick={() => openAddModal(new Date().toISOString().split("T")[0])} style={{ position: "relative", zIndex: 9999 }}>
-                                            <Button1components className="Pixso-instance-2_170 hover-target" button1state="default" slot_45_10={<p id="2_171" className="Pixso-paragraph-2_171">{"EDIT"}</p>} />
+                                        <div onClick={() => openAddModal(new Date().toISOString().split("T")[0])} style={{ position: "relative", zIndex: 9999, display: "contents" }}>
+                                            <Button1components className="Pixso-instance-2_170 hover-target" button1state="default" slot_45_10={<p id="2_171" className="Pixso-paragraph-2_171" style={{pointerEvents:"none"}}>{"EDIT"}</p>} />
                                         </div>
                                     }
                                 />
 
-                                {/* SEARCH 기능 다이렉트 연결 */}
                                 <Searchmenu 
                                     id="52_26" className="Pixso-instance-52_26" searchmenu="False" 
                                     slot_107_367={
-                                        <div onClick={() => setIsSearchModalOpen(true)} style={{ position: "relative", zIndex: 9999 }}>
-                                            <Button1components className="Pixso-instance-2_176 hover-target" button1state="default" slot_45_10={<p id="2_177" className="Pixso-paragraph-2_177">{"SEARCH"}</p>} />
+                                        <div onClick={() => setIsSearchModalOpen(true)} style={{ position: "relative", zIndex: 9999, display: "contents" }}>
+                                            <Button1components className="Pixso-instance-2_176 hover-target" button1state="default" slot_45_10={<p id="2_177" className="Pixso-paragraph-2_177" style={{pointerEvents:"none"}}>{"SEARCH"}</p>} />
                                         </div>
                                     } 
                                 />
                                 
-                                {/* RESET 기능 다이렉트 연결 */}
                                 <Resetbutton 
                                     id="52_28" className="Pixso-instance-52_28" resetmenu="default" 
                                     slot_143_265={
-                                        <div onClick={() => { setCurrentDate(new Date()); setSelectedRegion("KR"); setSearchQuery(""); }} style={{ position: "relative", zIndex: 9999 }}>
-                                            <Button1components className="Pixso-instance-2_186 hover-target" button1state="default" slot_45_10={<p id="2_187" className="Pixso-paragraph-2_187">{"RESET"}</p>} />
+                                        <div onClick={() => { setCurrentDate(new Date()); setSelectedRegion("KR"); setSearchQuery(""); }} style={{ position: "relative", zIndex: 9999, display: "contents" }}>
+                                            <Button1components className="Pixso-instance-2_186 hover-target" button1state="default" slot_45_10={<p id="2_187" className="Pixso-paragraph-2_187" style={{pointerEvents:"none"}}>{"RESET"}</p>} />
                                         </div>
                                     } 
                                 />
@@ -382,4 +383,251 @@ const Frame72327 = () => {
                                             <div id="64_170" className="Pixso-frame-64_170">
                                                 <div className="frame-content-64_170">
                                                     <div id="64_78" className="Pixso-frame-64_78">
-                                                        <div className="frame-content-6
+                                                        <div className="frame-content-64_78">
+                                                            <DayHeader cId="64_46" pId="2_15" text="S" />
+                                                            <DayHeader cId="64_63" pId="2_32" text="M" />
+                                                            <DayHeader cId="64_66" pId="2_43" text="T" />
+                                                            <DayHeader cId="64_69" pId="2_7" text="W" />
+                                                            <DayHeader cId="64_175" pId="2_48" text="T" />
+                                                            <DayHeader cId="64_181" pId="2_25" text="F" />
+                                                            <DayHeader cId="64_178" pId="2_42" text="S" />
+                                                        </div>
+                                                    </div>
+                                                    <div id="64_79" className="Pixso-frame-64_79"><div className="frame-content-64_79">{leftGrid.slice(0, 7).map((item, idx) => renderCell(item, idx))}</div></div>
+                                                    <div id="64_95" className="Pixso-frame-64_95"><div className="frame-content-64_95">{leftGrid.slice(7, 14).map((item, idx) => renderCell(item, idx))}</div></div>
+                                                    <div id="64_110" className="Pixso-frame-64_110"><div className="frame-content-64_110">{leftGrid.slice(14, 21).map((item, idx) => renderCell(item, idx))}</div></div>
+                                                    <div id="64_125" className="Pixso-frame-64_125"><div className="frame-content-64_125">{leftGrid.slice(21, 28).map((item, idx) => renderCell(item, idx))}</div></div>
+                                                    <div id="64_140" className="Pixso-frame-64_140"><div className="frame-content-64_140">{leftGrid.slice(28, 35).map((item, idx) => renderCell(item, idx))}</div></div>
+                                                    <div id="64_155" className="Pixso-frame-64_155"><div className="frame-content-64_155">{leftGrid.slice(35, 42).map((item, idx) => renderCell(item, idx))}</div></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div id="68_322" className="Pixso-vector-68_322"></div>
+
+                                    <div id="68_321" className="Pixso-frame-68_321">
+                                        <div className="frame-content-68_321">
+                                            <div id="66_320" className="Pixso-frame-66_320">
+                                                <div className="frame-content-66_320">
+                                                    <div onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1))} style={{ position: "relative", zIndex: 9999, display: "contents" }}>
+                                                        <Button1components className="Pixso-instance-58_13 hover-target" button1state="default" slot_45_10={<p id="2_44" className="Pixso-paragraph-2_44" style={{pointerEvents:"none"}}>{"<"}</p>} />
+                                                    </div>
+                                                    <div id="66_208" className="Pixso-frame-66_208">
+                                                        <div className="frame-content-66_208">
+                                                            <div id="66_209" className="Pixso-frame-66_209"><div className="frame-content-66_209"><p id="66_210" className="Pixso-paragraph-66_210" style={{fontFamily:"Retro Gaming, monospace"}}>{rightDate.getFullYear()}</p></div></div>
+                                                            <div id="66_211" className="Pixso-frame-66_211"><div className="frame-content-66_211"><p id="66_212" className="Pixso-paragraph-66_212" style={{fontFamily:"Retro Gaming, monospace"}}>{String(rightDate.getMonth() + 1).padStart(2, '0')}</p></div></div>
+                                                        </div>
+                                                    </div>
+                                                    <div onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1))} style={{ position: "relative", zIndex: 9999, display: "contents" }}>
+                                                        <Button1components className="Pixso-instance-129_172 hover-target" button1state="default" slot_45_10={<p id="2_40" className="Pixso-paragraph-2_40" style={{pointerEvents:"none"}}>{">"}</p>} />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div id="66_213" className="Pixso-frame-66_213">
+                                                <div className="frame-content-66_213">
+                                                    <div id="66_214" className="Pixso-frame-66_214">
+                                                        <div className="frame-content-66_214">
+                                                            <DayHeader cId="66_215" pId="2_1" text="S" />
+                                                            <DayHeader cId="66_216" pId="2_24" text="M" />
+                                                            <DayHeader cId="66_217" pId="2_3" text="T" />
+                                                            <DayHeader cId="66_218" pId="2_11" text="W" />
+                                                            <DayHeader cId="66_219" pId="2_13" text="T" />
+                                                            <DayHeader cId="66_220" pId="2_27" text="F" />
+                                                            <DayHeader cId="66_221" pId="2_39" text="S" />
+                                                        </div>
+                                                    </div>
+                                                    <div id="66_222" className="Pixso-frame-66_222"><div className="frame-content-66_222">{rightGrid.slice(0, 7).map((item, idx) => renderCell(item, idx))}</div></div>
+                                                    <div id="66_230" className="Pixso-frame-66_230"><div className="frame-content-66_230">{rightGrid.slice(7, 14).map((item, idx) => renderCell(item, idx))}</div></div>
+                                                    <div id="66_238" className="Pixso-frame-66_238"><div className="frame-content-66_238">{rightGrid.slice(14, 21).map((item, idx) => renderCell(item, idx))}</div></div>
+                                                    <div id="66_246" className="Pixso-frame-66_246"><div className="frame-content-66_246">{rightGrid.slice(21, 28).map((item, idx) => renderCell(item, idx))}</div></div>
+                                                    <div id="66_254" className="Pixso-frame-66_254"><div className="frame-content-66_254">{rightGrid.slice(28, 35).map((item, idx) => renderCell(item, idx))}</div></div>
+                                                    <div id="66_262" className="Pixso-frame-66_262"><div className="frame-content-66_262">{rightGrid.slice(35, 42).map((item, idx) => renderCell(item, idx))}</div></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="stroke-68_326"></div>
+                        </div>
+                    </div>
+                </div>
+                <div className="stroke-72_327"></div>
+            </div>
+
+            {/* ---------------------------------------------------- */}
+            {/* 🎯 모달 1: 일정 추가 모달창 */}
+            {/* ---------------------------------------------------- */}
+            {isAddModalOpen && (
+                <div 
+                    style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", backgroundColor: "rgba(0,0,0,0.6)", zIndex: 9999, display: "flex", justifyContent: "center", alignItems: "center" }}
+                    onClick={() => setIsAddModalOpen(false)} 
+                >
+                    <div style={{ width: "250px" }} onClick={(e) => e.stopPropagation()}>
+                        <div id="107_433" className="stroke-wrapper-107_433">
+                            <div className="Pixso-frame-107_433">
+                                <div className="frame-content-107_433">
+                                    <div id="107_432" className="Pixso-frame-107_432">
+                                        <div className="frame-content-107_432">
+                                            <div id="107_417" className="Pixso-frame-107_417">
+                                                <div className="frame-content-107_417">
+                                                    <p id="107_416" className="Pixso-paragraph-107_416">{"Title"}</p>
+                                                </div>
+                                            </div>
+                                            <div onClick={handleSaveEvent} style={{ display: "contents" }}>
+                                                <Button1components className="Pixso-instance-107_429 hover-target" button1state="default" slot_45_10={<p id="13_6" className="Pixso-paragraph-13_6" style={{pointerEvents:"none"}}>{"OK"}</p>} />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div id="139_134" className="Pixso-frame-139_134">
+                                        <div id="107_410" className="stroke-wrapper-107_410">
+                                            <div className="Pixso-rectangle-107_410" style={{ position: "relative" }}>
+                                                <div className="shadow-blend-unknown-0"></div>
+                                                <input autoFocus type="text" value={eventTitle} onChange={(e) => setEventTitle(e.target.value)} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", background: "transparent", border: "none", outline: "none", padding: "0 8px", fontFamily: "inherit" }} />
+                                            </div>
+                                            <div className="stroke-107_410"></div>
+                                        </div>
+                                    </div>
+                                    <div id="107_418" className="Pixso-frame-107_418">
+                                        <div className="frame-content-107_418"><p id="107_419" className="Pixso-paragraph-107_419">{"Date"}</p></div>
+                                    </div>
+                                    <div id="125_157" className="Pixso-frame-125_157">
+                                        <div className="frame-content-125_157">
+                                            <div id="125_161" className="stroke-wrapper-125_161">
+                                                <div className="Pixso-frame-125_161" style={{ position: "relative", padding: 0 }}>
+                                                    <div className="shadow-blend-unknown-0"></div>
+                                                    <input type="text" value={eventStartDate} onChange={(e) => setEventStartDate(e.target.value)} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", background: "transparent", border: "none", outline: "none", textAlign: "center", fontFamily: "inherit", fontSize: "12px" }} />
+                                                </div>
+                                                <div className="stroke-125_161"></div>
+                                            </div>
+                                            <div id="125_155" className="Pixso-frame-125_155">
+                                                <div className="frame-content-125_155"><p id="125_154" className="Pixso-paragraph-125_154">{"-"}</p></div>
+                                            </div>
+                                            <div id="125_162" className="stroke-wrapper-125_162">
+                                                <div className="Pixso-frame-125_162" style={{ position: "relative", padding: 0 }}>
+                                                    <div className="shadow-blend-unknown-0"></div>
+                                                    <input type="text" value={eventEndDate} onChange={(e) => setEventEndDate(e.target.value)} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", background: "transparent", border: "none", outline: "none", textAlign: "center", fontFamily: "inherit", fontSize: "12px" }} />
+                                                </div>
+                                                <div className="stroke-125_162"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div id="107_423" className="Pixso-frame-107_423">
+                                        <div className="frame-content-107_423"><p id="107_421" className="Pixso-paragraph-107_421">{"Memo"}</p></div>
+                                    </div>
+                                    <div id="139_135" className="Pixso-frame-139_135">
+                                        <div id="107_413" className="stroke-wrapper-107_413">
+                                            <div className="Pixso-rectangle-107_413" style={{ position: "relative" }}>
+                                                <div className="shadow-blend-unknown-0"></div>
+                                                <textarea value={eventMemo} onChange={(e) => setEventMemo(e.target.value)} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", background: "transparent", border: "none", outline: "none", padding: "8px", fontFamily: "inherit", resize: "none" }} />
+                                            </div>
+                                            <div className="stroke-107_413"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="stroke-107_433"></div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ---------------------------------------------------- */}
+            {/* 🎯 모달 2: 일정 확인/삭제 모달창 */}
+            {/* ---------------------------------------------------- */}
+            {viewModalData.isOpen && (
+                <div 
+                    style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", backgroundColor: "rgba(0,0,0,0.6)", zIndex: 9999, display: "flex", justifyContent: "center", alignItems: "center" }}
+                    onClick={() => setViewModalData({ isOpen: false, title: "", isHoliday: false })} 
+                >
+                    <div style={{ width: "250px" }} onClick={(e) => e.stopPropagation()}>
+                        <div id="120_147" className="stroke-wrapper-120_147">
+                            <div className="Pixso-frame-120_147" style={{ padding: "12px", justifyContent: "space-between" }}>
+                                <div className="frame-content-120_147">
+                                    <div id="120_146" className="Pixso-frame-120_146" style={{ width: "100%" }}>
+                                        <div className="frame-content-120_146">
+                                            <div id="120_137" className="Pixso-frame-120_137" style={{ width: "100%" }}>
+                                                <div className="frame-content-120_137">
+                                                    <p id="119_134" className="Pixso-paragraph-119_134" style={{ fontFamily: "Retro Gaming, DungGeunMo, monospace" }}>
+                                                        {viewModalData.title}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {!viewModalData.isHoliday && (
+                                        <div onClick={() => { if (viewModalData.eventId) handleDeleteEvent(viewModalData.eventId); }} style={{ marginTop: "12px", display: "contents" }}>
+                                            <Button1components className="Pixso-instance-120_141 hover-target" button1state="default" slot_45_10={<p id="14_14" className="Pixso-paragraph-14_14" style={{ fontFamily: "Retro Gaming, monospace", pointerEvents:"none" }}>{"DELETE"}</p>} />
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                            <div className="stroke-120_147"></div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ---------------------------------------------------- */}
+            {/* 🎯 모달 3: SEARCH 검색 모달창 */}
+            {/* ---------------------------------------------------- */}
+            {isSearchModalOpen && (
+                <div 
+                    style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", backgroundColor: "rgba(0,0,0,0.6)", zIndex: 9999, display: "flex", justifyContent: "center", alignItems: "center" }}
+                    onClick={() => setIsSearchModalOpen(false)} 
+                >
+                    <div style={{ width: "250px" }} onClick={(e) => e.stopPropagation()}>
+                        <div className="stroke-wrapper-120_147">
+                            <div className="Pixso-frame-120_147" style={{ justifyContent: "flex-start" }}>
+                                <div className="frame-content-120_147" style={{ alignItems: "stretch", padding: "12px" }}>
+                                    
+                                    <div className="Pixso-frame-120_146" style={{ width: "100%", height: "auto" }}>
+                                        <div className="frame-content-120_146">
+                                            <div className="Pixso-frame-120_137" style={{ width: "100%", padding: "4px" }}>
+                                                <div className="frame-content-120_137">
+                                                    <p className="Pixso-paragraph-119_134" style={{ fontFamily: "Retro Gaming, DungGeunMo, monospace", fontSize: "14px" }}>
+                                                        {"SEARCH RESULT"}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div style={{ marginTop: "10px", border: "2px solid", borderTopColor: "#888", borderLeftColor: "#888", borderBottomColor: "#fff", borderRightColor: "#fff", backgroundColor: "#fff" }}>
+                                        <input 
+                                            autoFocus type="text" placeholder="KEYWORD..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} 
+                                            style={{ width: "100%", padding: "6px", border: "none", outline: "none", fontFamily: "Retro Gaming, DungGeunMo, monospace", fontSize: "12px", boxSizing: "border-box" }} 
+                                        />
+                                    </div>
+
+                                    <div style={{ marginTop: "10px", minHeight: "100px", maxHeight: "150px", overflowY: "auto", backgroundColor: "#fff", border: "2px solid", borderTopColor: "#888", borderLeftColor: "#888", borderBottomColor: "#fff", borderRightColor: "#fff", padding: "8px", fontFamily: "DungGeunMo, monospace", fontSize: "12px", boxSizing: "border-box" }}>
+                                        {searchQuery.trim() === "" ? (
+                                            <span style={{ color: "#888" }}>Waiting for input...</span>
+                                        ) : searchResults.length === 0 ? (
+                                            <span style={{ color: "red" }}>NO DATA FOUND.</span>
+                                        ) : (
+                                            searchResults.map((e, i) => (
+                                                <div key={i} style={{ margin: "4px 0", borderBottom: "1px dashed #ccc", paddingBottom: "4px", cursor: "pointer" }}>
+                                                    <span style={{ color: "blue", marginRight: "6px" }}>[{e.start?.date || e.start?.dateTime?.split("T")[0]}]</span>
+                                                    {e.summary}
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+
+                                    <div onClick={() => setIsSearchModalOpen(false)} style={{ marginTop: "12px", display: "flex", justifyContent: "flex-end", display: "contents" }}>
+                                        <Button1components className="Pixso-instance-120_141 hover-target" button1state="default" slot_45_10={<p className="Pixso-paragraph-14_14" style={{ fontFamily: "Retro Gaming, monospace", pointerEvents:"none" }}>{"CLOSE"}</p>} />
+                                    </div>
+
+                                </div>
+                            </div>
+                            <div className="stroke-120_147"></div>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+export default Frame72327;
