@@ -8,7 +8,10 @@ import Resetbutton from "@/components/Resetbutton";
 import Datecomponents from "@/components/Datecomponents";
 import Dateselectbutton1 from "@/components/Dateselectbutton1";
 import Dateselectbutton2 from "@/components/Dateselectbutton2";
+
+// 스타일 시트 임포트 (추가된 팝업창 CSS 포함)
 import "@/styles/Frame72327.css";
+import "@/styles/Frame107433.css"; 
 
 declare global {
     interface Window {
@@ -17,9 +20,9 @@ declare global {
     }
 }
 
-// 구글 캘린더 API 설정
+// 구글 API 키 정보
 const CLIENT_ID = "930243544712-7j81q7c4d7885v43u1nqlmgbdtf85oat.apps.googleusercontent.com";
-const SCOPES = "https://www.googleapis.com/auth/calendar.readonly";
+const SCOPES = "https://www.googleapis.com/auth/calendar";
 
 const HOLIDAY_CALENDARS: Record<string, string> = {
     KR: "ko.south_korea#holiday@group.v.calendar.google.com",
@@ -29,7 +32,7 @@ const HOLIDAY_CALENDARS: Record<string, string> = {
 
 const Frame72327 = () => {
     // ----------------------------------------------------
-    // 1. 유저 원본 껍데기 상태 
+    // 1. 유저 원본 메뉴 상태
     // ----------------------------------------------------
     const [regionmenu_52_20, setRegionmenu_52_20] = useState("False");
     const [button1state_2_188, setButton1state_2_188] = useState("default");
@@ -38,23 +41,27 @@ const Frame72327 = () => {
     const [button1state_2_186, setButton1state_2_186] = useState("default");
     const [button1state_58_13, setButton1state_58_13] = useState("default");
     const [button1state_129_172, setButton1state_129_172] = useState("default");
-
-    // 원본 애니메이션 설정
     const [transitionConfig52_20, setTransitionConfig52_20] = useState<any>({});
-    const transitionConfigMap: any = {
-        "52:20_97:170_c": {
-            transition: { duration: 0.1, ease: [0.215, 0.61, 0.355, 1] }
-        }
-    };
+    
+    // 모달창 OK 버튼 상태
+    const [button1state_107_429, setButton1state_107_429] = useState("default");
 
     // ----------------------------------------------------
-    // 2. 동적 달력 엔진 상태
+    // 2. 엔진 상태 (데이터 및 팝업창 컨트롤)
     // ----------------------------------------------------
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedRegion, setSelectedRegion] = useState("KR");
     const [holidays, setHolidays] = useState<any[]>([]);
+    const [events, setEvents] = useState<any[]>([]); // 개인 일정 데이터 추가
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const tokenClientRef = useRef<any>(null);
+
+    // 팝업창(모달) 상태 관리
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [eventTitle, setEventTitle] = useState("");
+    const [eventStartDate, setEventStartDate] = useState("");
+    const [eventEndDate, setEventEndDate] = useState("");
+    const [eventMemo, setEventMemo] = useState("");
 
     // 구글 API 스크립트 로드
     useEffect(() => {
@@ -96,19 +103,27 @@ const Frame72327 = () => {
         }
     };
 
-    // 실시간 휴일 데이터 패치
+    // 실시간 휴일 & 내 일정 데이터 패치
     useEffect(() => {
-        if (isAuthenticated) fetchHolidays();
+        if (isAuthenticated) fetchCalendarData();
     }, [isAuthenticated, currentDate, selectedRegion]);
 
-    const fetchHolidays = async () => {
+    const fetchCalendarData = async () => {
         try {
             const timeMin = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString();
             const timeMax = new Date(currentDate.getFullYear(), currentDate.getMonth() + 4, 0).toISOString();
+            
+            // 공휴일 불러오기
             const holidayResp = await window.gapi.client.calendar.events.list({
                 calendarId: HOLIDAY_CALENDARS[selectedRegion], timeMin, timeMax, singleEvents: true,
             });
             setHolidays(holidayResp.result.items || []);
+
+            // 내 일정 불러오기
+            const eventsResp = await window.gapi.client.calendar.events.list({
+                calendarId: "primary", timeMin, timeMax, singleEvents: true, orderBy: "startTime"
+            });
+            setEvents(eventsResp.result.items || []);
         } catch (error: any) {
             if (error.status === 401) setIsAuthenticated(false);
         }
@@ -116,27 +131,35 @@ const Frame72327 = () => {
 
     const handleLogin = () => tokenClientRef.current?.requestAccessToken({ prompt: "consent" });
 
-    // ----------------------------------------------------
-    // 드롭다운 메뉴 작동 함수
-    // ----------------------------------------------------
-    const toggleRegionMenu = (e: any) => {
-        e.stopPropagation();
-        setRegionmenu_52_20(prev => prev === "False" ? "True" : "False");
-        
-        const key = "52:20_97:170_c";
-        if (transitionConfigMap[key]) {
-            setTransitionConfig52_20(transitionConfigMap[key]);
-        }
+    // 일정 저장 함수 (OK 버튼 누를 때 실행)
+    const handleSaveEvent = async () => {
+        if (!eventTitle.trim() || !eventStartDate) return;
+        try {
+            await window.gapi.client.calendar.events.insert({
+                calendarId: "primary",
+                resource: { 
+                    summary: eventTitle, 
+                    description: eventMemo,
+                    start: { date: eventStartDate }, 
+                    end: { date: eventEndDate || eventStartDate } 
+                }
+            });
+            // 저장 성공 시 모달 닫기 및 초기화
+            setEventTitle(""); setEventStartDate(""); setEventEndDate(""); setEventMemo("");
+            setIsModalOpen(false);
+            fetchCalendarData();
+        } catch (error) {}
     };
 
-    const selectRegion = (region: string) => (e: any) => {
-        e.stopPropagation();
-        setSelectedRegion(region);
-        setRegionmenu_52_20("False"); // 선택 후 메뉴 닫기
+    // 팝업 열기 함수
+    const openAddModal = (dateStr: string) => {
+        setEventStartDate(dateStr);
+        setEventEndDate(dateStr);
+        setIsModalOpen(true);
     };
 
     // ----------------------------------------------------
-    // 달력 날짜 자동 계산 로직
+    // 달력 렌더링 로직
     // ----------------------------------------------------
     const getGridDates = (year: number, month: number) => {
         const grid = [];
@@ -156,6 +179,7 @@ const Frame72327 = () => {
         const dateStr = targetDate.toISOString().split("T")[0];
         if (dateStr === new Date().toISOString().split("T")[0]) return "today";
         if (holidays.some(h => (h.start?.date || h.start?.dateTime?.split("T")[0]) === dateStr)) return "holiday";
+        if (events.some(e => (e.start?.date || e.start?.dateTime?.split("T")[0]) === dateStr)) return "my schedule";
         return "default";
     };
 
@@ -163,11 +187,22 @@ const Frame72327 = () => {
     
     const renderCell = (item: any, idx: number) => {
         const day = String(item.date.getDate());
+        const dateStr = item.date.toISOString().split("T")[0];
+        
         if (!item.isCurrentMonth) {
             return <Datecomponents key={idx} datestates="disable" slot_62_37={<p style={pStyle}>{day}</p>} />;
         }
         
         const state = getDateState(item.date, true);
+        
+        // 일정이 있는 날짜 렌더링
+        if (state === "my schedule") {
+            return (
+                <Dateselectbutton2 key={idx} dateselectnew2="my schedule" slot_146_536={
+                    <Datecomponents datestates="my schedule" slot_135_168={<p style={pStyle}>{day}</p>} />
+                } />
+            );
+        }
         if (state === "holiday") {
             return (
                 <Dateselectbutton2 key={idx} dateselectnew2="holiday" slot_146_537={
@@ -175,17 +210,23 @@ const Frame72327 = () => {
                 } />
             );
         }
+
+        // 일정이 없는 날짜(today, default) 렌더링 -> 클릭 시 팝업 오픈!
         if (state === "today") {
             return (
-                <Dateselectbutton1 key={idx} dateselectbutton="today" slot_146_414={
-                    <Datecomponents datestates="today" slot_62_31={<p style={pStyle}>{day}</p>} />
-                } />
+                <div key={idx} onClick={() => openAddModal(dateStr)} style={{cursor:"pointer"}}>
+                    <Dateselectbutton1 dateselectbutton="today" slot_146_414={
+                        <Datecomponents datestates="today" slot_62_31={<p style={pStyle}>{day}</p>} />
+                    } />
+                </div>
             );
         }
         return (
-            <Dateselectbutton1 key={idx} dateselectbutton="default" slot_146_413={
-                <Datecomponents datestates="default" slot_60_22={<p style={pStyle}>{day}</p>} />
-            } />
+            <div key={idx} onClick={() => openAddModal(dateStr)} style={{cursor:"pointer"}}>
+                <Dateselectbutton1 dateselectbutton="default" slot_146_413={
+                    <Datecomponents datestates="default" slot_60_22={<p style={pStyle}>{day}</p>} />
+                } />
+            </div>
         );
     };
 
@@ -195,12 +236,12 @@ const Frame72327 = () => {
     const rightGrid = getGridDates(rightDate.getFullYear(), rightDate.getMonth());
 
     return (
-        <div className="scroll-container">
+        <div className="scroll-container" style={{ position: "relative" }}>
             <div id="72_327" className="stroke-wrapper-72_327">
                 <div className="Pixso-frame-72_327">
                     <div className="frame-content-72_327">
                         
-                        {/* 최상단 장식 바 (로그인 버튼으로 활용) */}
+                        {/* 상단 로그인 연동 바 */}
                         <div id="45_8" className="Pixso-frame-45_8" onClick={handleLogin} style={{ cursor: "pointer" }}>
                             <div className="frame-content-45_8">
                                 <div id="129_166" className="Pixso-frame-129_166">
@@ -234,72 +275,30 @@ const Frame72327 = () => {
                             </div>
                         </div>
 
-                        {/* 메뉴 툴바 (드롭다운을 위해 zIndex: 9999 부여) */}
-                        <div id="52_30" className="Pixso-frame-52_30" style={{ position: "relative", zIndex: 9999, overflow: "visible" }}>
+                        {/* 메뉴 툴바 */}
+                        <div id="52_30" className="Pixso-frame-52_30" style={{ position: "relative", zIndex: 9000, overflow: "visible" }}>
                             <div className="frame-content-52_30">
                                 
-                                {/* 🎯 완벽하게 복원된 드롭다운 영역 🎯 */}
                                 <Regionmenu
-                                    id="52_20" className="Pixso-instance-52_20" 
-                                    regionmenu={regionmenu_52_20}
-                                    transitionConfig={transitionConfig52_20}
-                                    click={toggleRegionMenu}
-                                    
-                                    // 1. 메뉴가 닫혀있을 때 보이는 버튼 (텍스트 REGION으로 복구)
-                                    slot_97_144={
-                                        <Button1components
-                                            id="2_188" className="Pixso-instance-2_188" button1state={button1state_2_188}
-                                            slot_45_10={<p id="2_189" className="Pixso-paragraph-2_189" style={{cursor:"pointer", pointerEvents:"auto"}}>{"REGION"}</p>}
-                                        />
-                                    }
-                                    // 2. 메뉴가 열려있을 때 상단에 켜져 있는 버튼 (텍스트 REGION으로 복구)
-                                    slot_97_159={
-                                        <Button1components
-                                            id="2_188_exp" className="Pixso-instance-2_188" button1state="checked"
-                                            slot_45_10={<p id="2_189_exp" className="Pixso-paragraph-2_189" style={{cursor:"pointer", pointerEvents:"auto"}} onClick={(e) => { e.stopPropagation(); setRegionmenu_52_20("False"); }}>{"REGION"}</p>}
-                                        />
-                                    }
-                                    // 3. 하위 메뉴 항목: KOREA
-                                    slot_97_161={
-                                        <Button2components button2state="default" click={selectRegion("KR")} slot_77_120={<p id="77_120_kr" className="Pixso-paragraph-77_120" style={{cursor:"pointer", pointerEvents:"auto"}}>{"KOREA"}</p>} />
-                                    }
-                                    // 4. 하위 메뉴 항목: JAPAN
-                                    slot_97_162={
-                                        <Button2components button2state="default" click={selectRegion("JP")} slot_77_120={<p id="77_120_jp" className="Pixso-paragraph-77_120" style={{cursor:"pointer", pointerEvents:"auto"}}>{"JAPAN"}</p>} />
-                                    }
-                                    // 5. 하위 메뉴 항목: AMERICA
-                                    slot_97_163={
-                                        <Button2components button2state="default" click={selectRegion("US")} slot_77_120={<p id="77_120_us" className="Pixso-paragraph-77_120" style={{cursor:"pointer", pointerEvents:"auto"}}>{"AMERICA"}</p>} />
-                                    }
+                                    id="52_20" className="Pixso-instance-52_20" regionmenu={regionmenu_52_20}
+                                    click={(e) => { e.stopPropagation(); setRegionmenu_52_20(prev => prev === "False" ? "True" : "False"); }}
+                                    slot_97_144={<Button1components id="2_188" className="Pixso-instance-2_188" button1state={button1state_2_188} slot_45_10={<p id="2_189" className="Pixso-paragraph-2_189" style={{cursor:"pointer", pointerEvents:"auto"}}>{"REGION"}</p>} />}
+                                    slot_97_159={<Button1components id="2_188_exp" className="Pixso-instance-2_188" button1state="checked" slot_45_10={<p id="2_189_exp" className="Pixso-paragraph-2_189" style={{cursor:"pointer", pointerEvents:"auto"}} onClick={(e) => { e.stopPropagation(); setRegionmenu_52_20("False"); }}>{"REGION"}</p>} />}
+                                    slot_97_161={<Button2components button2state="default" click={(e) => { e.stopPropagation(); setSelectedRegion("KR"); setRegionmenu_52_20("False"); }} slot_77_120={<p id="77_120_kr" className="Pixso-paragraph-77_120" style={{cursor:"pointer", pointerEvents:"auto"}}>{"KOREA"}</p>} />}
+                                    slot_97_162={<Button2components button2state="default" click={(e) => { e.stopPropagation(); setSelectedRegion("JP"); setRegionmenu_52_20("False"); }} slot_77_120={<p id="77_120_jp" className="Pixso-paragraph-77_120" style={{cursor:"pointer", pointerEvents:"auto"}}>{"JAPAN"}</p>} />}
+                                    slot_97_163={<Button2components button2state="default" click={(e) => { e.stopPropagation(); setSelectedRegion("US"); setRegionmenu_52_20("False"); }} slot_77_120={<p id="77_120_us" className="Pixso-paragraph-77_120" style={{cursor:"pointer", pointerEvents:"auto"}}>{"AMERICA"}</p>} />}
                                 />
 
-                                <Editmenu
-                                    id="52_23" className="Pixso-instance-52_23" editmenu="False"
-                                    slot_107_320={
-                                        <Button1components
-                                            id="2_170" className="Pixso-instance-2_170" button1state={button1state_2_170}
-                                            slot_45_10={<p id="2_171" className="Pixso-paragraph-2_171">{"EDIT"}</p>}
-                                        />
-                                    }
-                                />
-                                <Searchmenu
-                                    id="52_26" className="Pixso-instance-52_26" searchmenu="False"
-                                    slot_107_367={
-                                        <Button1components
-                                            id="2_176" className="Pixso-instance-2_176" button1state={button1state_2_176}
-                                            slot_45_10={<p id="2_177" className="Pixso-paragraph-2_177">{"SEARCH"}</p>}
-                                        />
-                                    }
-                                />
-                                <Resetbutton
-                                    id="52_28" className="Pixso-instance-52_28" resetmenu="default"
-                                    slot_143_265={
-                                        <Button1components
-                                            id="2_186" className="Pixso-instance-2_186" button1state={button1state_2_186}
-                                            slot_45_10={<p id="2_187" className="Pixso-paragraph-2_187" onClick={() => { setCurrentDate(new Date()); setSelectedRegion("KR"); }} style={{cursor:"pointer", pointerEvents:"auto"}}>{"RESET"}</p>}
-                                        />
-                                    }
-                                />
+                                {/* 🎯 EDIT 버튼 클릭 시 오늘 날짜 기준으로 팝업 오픈! 🎯 */}
+                                <div onClick={() => openAddModal(new Date().toISOString().split("T")[0])} style={{cursor:"pointer"}}>
+                                    <Editmenu
+                                        id="52_23" className="Pixso-instance-52_23" editmenu="False"
+                                        slot_107_320={<Button1components id="2_170" className="Pixso-instance-2_170" button1state={button1state_2_170} slot_45_10={<p id="2_171" className="Pixso-paragraph-2_171">{"EDIT"}</p>} />}
+                                    />
+                                </div>
+
+                                <Searchmenu id="52_26" className="Pixso-instance-52_26" searchmenu="False" slot_107_367={<Button1components id="2_176" className="Pixso-instance-2_176" button1state={button1state_2_176} slot_45_10={<p id="2_177" className="Pixso-paragraph-2_177">{"SEARCH"}</p>} />} />
+                                <Resetbutton id="52_28" className="Pixso-instance-52_28" resetmenu="default" slot_143_265={<Button1components id="2_186" className="Pixso-instance-2_186" button1state={button1state_2_186} slot_45_10={<p id="2_187" className="Pixso-paragraph-2_187" onClick={() => { setCurrentDate(new Date()); setSelectedRegion("KR"); }} style={{cursor:"pointer", pointerEvents:"auto"}}>{"RESET"}</p>} />} />
                             </div>
                         </div>
 
@@ -308,8 +307,6 @@ const Frame72327 = () => {
                             <div className="Pixso-frame-68_326">
                                 <div className="shadow-blend-unknown-0"></div>
                                 <div className="frame-content-68_326">
-                                    
-                                    {/* 1. 왼쪽 캘린더 */}
                                     <div id="66_206" className="Pixso-frame-66_206">
                                         <div className="frame-content-66_206">
                                             <div id="66_205" className="Pixso-frame-66_205">
@@ -331,7 +328,6 @@ const Frame72327 = () => {
                                                             <Datecomponents id="64_178" className="Pixso-instance-64_178" datestates="day" slot_62_34={<p id="2_42" className="Pixso-paragraph-2_42">{"S"}</p>} />
                                                         </div>
                                                     </div>
-                                                    {/* 자동 매핑되는 왼쪽 날짜들 */}
                                                     <div id="64_79" className="Pixso-frame-64_79"><div className="frame-content-64_79">{leftGrid.slice(0, 7).map((item, idx) => renderCell(item, idx))}</div></div>
                                                     <div id="64_95" className="Pixso-frame-64_95"><div className="frame-content-64_95">{leftGrid.slice(7, 14).map((item, idx) => renderCell(item, idx))}</div></div>
                                                     <div id="64_110" className="Pixso-frame-64_110"><div className="frame-content-64_110">{leftGrid.slice(14, 21).map((item, idx) => renderCell(item, idx))}</div></div>
@@ -342,28 +338,19 @@ const Frame72327 = () => {
                                             </div>
                                         </div>
                                     </div>
-
                                     <div id="68_322" className="Pixso-vector-68_322"></div>
-
-                                    {/* 2. 오른쪽 캘린더 */}
                                     <div id="68_321" className="Pixso-frame-68_321">
                                         <div className="frame-content-68_321">
                                             <div id="66_320" className="Pixso-frame-66_320">
                                                 <div className="frame-content-66_320">
-                                                    <Button1components
-                                                        id="58_13" className="Pixso-instance-58_13" button1state={button1state_58_13}
-                                                        slot_45_10={<p id="2_44" className="Pixso-paragraph-2_44" onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1))} style={{cursor:"pointer", pointerEvents:"auto"}}>{"<"}</p>}
-                                                    />
+                                                    <Button1components id="58_13" className="Pixso-instance-58_13" button1state={button1state_58_13} slot_45_10={<p id="2_44" className="Pixso-paragraph-2_44" onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1))} style={{cursor:"pointer", pointerEvents:"auto"}}>{"<"}</p>} />
                                                     <div id="66_208" className="Pixso-frame-66_208">
                                                         <div className="frame-content-66_208">
                                                             <div id="66_209" className="Pixso-frame-66_209"><div className="frame-content-66_209"><p id="66_210" className="Pixso-paragraph-66_210" style={{fontFamily:"Retro Gaming, monospace"}}>{rightDate.getFullYear()}</p></div></div>
                                                             <div id="66_211" className="Pixso-frame-66_211"><div className="frame-content-66_211"><p id="66_212" className="Pixso-paragraph-66_212" style={{fontFamily:"Retro Gaming, monospace"}}>{String(rightDate.getMonth() + 1).padStart(2, '0')}</p></div></div>
                                                         </div>
                                                     </div>
-                                                    <Button1components
-                                                        id="129_172" className="Pixso-instance-129_172" button1state={button1state_129_172}
-                                                        slot_45_10={<p id="2_40" className="Pixso-paragraph-2_40" onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1))} style={{cursor:"pointer", pointerEvents:"auto"}}>{">"}</p>}
-                                                    />
+                                                    <Button1components id="129_172" className="Pixso-instance-129_172" button1state={button1state_129_172} slot_45_10={<p id="2_40" className="Pixso-paragraph-2_40" onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1))} style={{cursor:"pointer", pointerEvents:"auto"}}>{">"}</p>} />
                                                 </div>
                                             </div>
                                             <div id="66_213" className="Pixso-frame-66_213">
@@ -379,7 +366,6 @@ const Frame72327 = () => {
                                                             <Datecomponents id="66_221" className="Pixso-instance-66_221" datestates="day" slot_62_34={<p id="2_39" className="Pixso-paragraph-2_39">{"S"}</p>} />
                                                         </div>
                                                     </div>
-                                                    {/* 자동 매핑되는 오른쪽 날짜들 */}
                                                     <div id="66_222" className="Pixso-frame-66_222"><div className="frame-content-66_222">{rightGrid.slice(0, 7).map((item, idx) => renderCell(item, idx))}</div></div>
                                                     <div id="66_230" className="Pixso-frame-66_230"><div className="frame-content-66_230">{rightGrid.slice(7, 14).map((item, idx) => renderCell(item, idx))}</div></div>
                                                     <div id="66_238" className="Pixso-frame-66_238"><div className="frame-content-66_238">{rightGrid.slice(14, 21).map((item, idx) => renderCell(item, idx))}</div></div>
@@ -398,6 +384,90 @@ const Frame72327 = () => {
                 </div>
                 <div className="stroke-72_327"></div>
             </div>
+
+            {/* 🎯 전달해주신 Frame107433 원본 100% 이식 모달창 🎯 */}
+            {isModalOpen && (
+                <div 
+                    style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", backgroundColor: "rgba(0,0,0,0.6)", zIndex: 9999, display: "flex", justifyContent: "center", alignItems: "center" }}
+                    onClick={() => setIsModalOpen(false)} 
+                >
+                    {/* 모달 본체 (크기 250px 고정) */}
+                    <div style={{ width: "250px" }} onClick={(e) => e.stopPropagation()}>
+                        <div id="107_433" className="stroke-wrapper-107_433">
+                            <div className="Pixso-frame-107_433">
+                                <div className="frame-content-107_433">
+                                    <div id="107_432" className="Pixso-frame-107_432">
+                                        <div className="frame-content-107_432">
+                                            <div id="107_417" className="Pixso-frame-107_417">
+                                                <div className="frame-content-107_417">
+                                                    <p id="107_416" className="Pixso-paragraph-107_416">{"Title"}</p>
+                                                </div>
+                                            </div>
+                                            {/* OK 버튼 (누르면 구글 캘린더 저장) */}
+                                            <div onClick={handleSaveEvent} style={{ cursor: "pointer", pointerEvents: "auto" }}>
+                                                <Button1components
+                                                    id="107_429" className="Pixso-instance-107_429" button1state={button1state_107_429}
+                                                    mouseover={() => setButton1state_107_429("checked")}
+                                                    slot_45_10={<p id="13_6" className="Pixso-paragraph-13_6">{"OK"}</p>}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {/* 1. Title 입력칸 (투명 input 덧댐) */}
+                                    <div id="139_134" className="Pixso-frame-139_134">
+                                        <div id="107_410" className="stroke-wrapper-107_410">
+                                            <div className="Pixso-rectangle-107_410" style={{ position: "relative" }}>
+                                                <div className="shadow-blend-unknown-0"></div>
+                                                <input type="text" value={eventTitle} onChange={(e) => setEventTitle(e.target.value)} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", background: "transparent", border: "none", outline: "none", padding: "0 8px", fontFamily: "inherit" }} />
+                                            </div>
+                                            <div className="stroke-107_410"></div>
+                                        </div>
+                                    </div>
+                                    <div id="107_418" className="Pixso-frame-107_418">
+                                        <div className="frame-content-107_418"><p id="107_419" className="Pixso-paragraph-107_419">{"Date"}</p></div>
+                                    </div>
+                                    {/* 2. Date 입력칸 (투명 input 덧댐) */}
+                                    <div id="125_157" className="Pixso-frame-125_157">
+                                        <div className="frame-content-125_157">
+                                            <div id="125_161" className="stroke-wrapper-125_161">
+                                                <div className="Pixso-frame-125_161" style={{ position: "relative", padding: 0 }}>
+                                                    <div className="shadow-blend-unknown-0"></div>
+                                                    <input type="text" value={eventStartDate} onChange={(e) => setEventStartDate(e.target.value)} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", background: "transparent", border: "none", outline: "none", textAlign: "center", fontFamily: "inherit", fontSize: "12px" }} />
+                                                </div>
+                                                <div className="stroke-125_161"></div>
+                                            </div>
+                                            <div id="125_155" className="Pixso-frame-125_155">
+                                                <div className="frame-content-125_155"><p id="125_154" className="Pixso-paragraph-125_154">{"-"}</p></div>
+                                            </div>
+                                            <div id="125_162" className="stroke-wrapper-125_162">
+                                                <div className="Pixso-frame-125_162" style={{ position: "relative", padding: 0 }}>
+                                                    <div className="shadow-blend-unknown-0"></div>
+                                                    <input type="text" value={eventEndDate} onChange={(e) => setEventEndDate(e.target.value)} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", background: "transparent", border: "none", outline: "none", textAlign: "center", fontFamily: "inherit", fontSize: "12px" }} />
+                                                </div>
+                                                <div className="stroke-125_162"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div id="107_423" className="Pixso-frame-107_423">
+                                        <div className="frame-content-107_423"><p id="107_421" className="Pixso-paragraph-107_421">{"Memo"}</p></div>
+                                    </div>
+                                    {/* 3. Memo 입력칸 (투명 textarea 덧댐) */}
+                                    <div id="139_135" className="Pixso-frame-139_135">
+                                        <div id="107_413" className="stroke-wrapper-107_413">
+                                            <div className="Pixso-rectangle-107_413" style={{ position: "relative" }}>
+                                                <div className="shadow-blend-unknown-0"></div>
+                                                <textarea value={eventMemo} onChange={(e) => setEventMemo(e.target.value)} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", background: "transparent", border: "none", outline: "none", padding: "8px", fontFamily: "inherit", resize: "none" }} />
+                                            </div>
+                                            <div className="stroke-107_413"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="stroke-107_433"></div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
