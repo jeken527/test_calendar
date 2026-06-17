@@ -17,7 +17,10 @@ import "@/styles/Frame97172.css";
 import "@/styles/Frame120147.css"; 
 
 declare global {
-    interface Window { gapi: any; google: any; }
+    interface Window {
+        gapi: any;
+        google: any;
+    }
 }
 
 const CLIENT_ID = "930243544712-7j81q7c4d7885v43u1nqlmgbdtf85oat.apps.googleusercontent.com";
@@ -30,9 +33,15 @@ const HOLIDAY_CALENDARS: Record<string, string> = {
 };
 
 const Frame72327 = () => {
+    // ----------------------------------------------------
+    // 1. 상태 관리
+    // ----------------------------------------------------
     const [regionmenu_52_20, setRegionmenu_52_20] = useState("False");
     const [hoveredDateStr, setHoveredDateStr] = useState<string | null>(null);
 
+    // ----------------------------------------------------
+    // 2. 엔진 상태 (데이터 및 팝업창 컨트롤)
+    // ----------------------------------------------------
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedRegion, setSelectedRegion] = useState("KR");
     const [myCalendarId, setMyCalendarId] = useState("primary");
@@ -48,10 +57,14 @@ const Frame72327 = () => {
     const [eventMemo, setEventMemo] = useState("");
 
     const [viewModalData, setViewModalData] = useState<{ isOpen: boolean; eventId?: string; title: string; isHoliday: boolean }>({ isOpen: false, title: "", isHoliday: false });
+    
     const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const searchResults = searchQuery.trim() ? events.filter(e => (e.summary || "").toLowerCase().includes(searchQuery.toLowerCase())) : [];
 
+    // ----------------------------------------------------
+    // 시간 및 범위 처리 헬퍼 함수
+    // ----------------------------------------------------
     const getLocalDateStr = (d: Date) => {
         const year = d.getFullYear();
         const month = String(d.getMonth() + 1).padStart(2, '0');
@@ -59,10 +72,22 @@ const Frame72327 = () => {
         return `${year}-${month}-${day}`;
     };
 
-    const getEventDateStr = (event: any) => {
-        if (event.start?.date) return event.start.date;
-        if (event.start?.dateTime) return getLocalDateStr(new Date(event.start.dateTime));
-        return null;
+    // 🎯 타겟 날짜가 이벤트 기간(시작~종료) 안에 포함되는지 판별하는 핵심 함수
+    const isDateCovered = (targetDateStr: string, event: any) => {
+        const start = event.start?.date || event.start?.dateTime?.substring(0, 10);
+        const end = event.end?.date || event.end?.dateTime?.substring(0, 10);
+        
+        if (!start) return false;
+        
+        // 종일 일정(date)의 경우 구글은 종료일을 하루 더 뒤로(Exclusive) 잡아둡니다.
+        if (event.end?.date) {
+            if (start === end) return targetDateStr === start;
+            return targetDateStr >= start && targetDateStr < end;
+        } else {
+            // 시간 단위 일정(dateTime)은 해당 날짜 포함(Inclusive)
+            if (!end) return targetDateStr === start;
+            return targetDateStr >= start && targetDateStr <= end;
+        }
     };
 
     useEffect(() => {
@@ -134,12 +159,23 @@ const Frame72327 = () => {
 
     const handleLogin = () => tokenClientRef.current?.requestAccessToken({ prompt: "consent" });
 
+    // 🎯 일정 저장 로직: 유저가 적은 날짜를 구글 캘린더 규칙에 맞게 +1일 보정하여 저장
     const handleSaveEvent = async () => {
         if (!eventTitle.trim() || !eventStartDate) return;
         try {
+            let targetEndDate = eventEndDate || eventStartDate;
+            const d = new Date(targetEndDate);
+            d.setDate(d.getDate() + 1); // 구글 캘린더 종일 일정 규격(+1일)
+            const googleExclusiveEnd = getLocalDateStr(d);
+
             await window.gapi.client.calendar.events.insert({
                 calendarId: myCalendarId,
-                resource: { summary: eventTitle, description: eventMemo, start: { date: eventStartDate }, end: { date: eventEndDate || eventStartDate } }
+                resource: { 
+                    summary: eventTitle, 
+                    description: eventMemo, 
+                    start: { date: eventStartDate }, 
+                    end: { date: googleExclusiveEnd } 
+                }
             });
             setEventTitle(""); setEventStartDate(""); setEventEndDate(""); setEventMemo("");
             setIsAddModalOpen(false);
@@ -160,11 +196,15 @@ const Frame72327 = () => {
         setEventStartDate(dateStr); setEventEndDate(dateStr); setIsAddModalOpen(true);
     };
 
+    // ----------------------------------------------------
+    // 달력 렌더링
+    // ----------------------------------------------------
     const getGridDates = (year: number, month: number) => {
         const grid = [];
         const startDay = new Date(year, month, 1).getDay();
         const prevEnd = new Date(year, month, 0).getDate();
         const currEnd = new Date(year, month + 1, 0).getDate();
+
         for (let i = startDay - 1; i >= 0; i--) grid.push({ date: new Date(year, month - 1, prevEnd - i), isCurrentMonth: false });
         for (let i = 1; i <= currEnd; i++) grid.push({ date: new Date(year, month, i), isCurrentMonth: true });
         let nextDay = 1;
@@ -172,17 +212,21 @@ const Frame72327 = () => {
         return grid;
     };
 
+    // 🎯 특정 칸(Target Date)이 어떤 상태(my schedule / holiday)인지 검사
     const getDateState = (targetDate: Date, isCurrentMonth: boolean) => {
         if (!isCurrentMonth) return "disable";
         const dateStr = getLocalDateStr(targetDate);
         const todayStr = getLocalDateStr(new Date());
+
+        // 배열의 이벤트들을 순회하며 해당 날짜가 범위 내에 들어있는지 확인
+        if (holidays.some(h => isDateCovered(dateStr, h))) return "holiday";
+        if (events.some(e => isDateCovered(dateStr, e))) return "my schedule";
         if (dateStr === todayStr) return "today";
-        if (holidays.some(h => getEventDateStr(h) === dateStr)) return "holiday";
-        if (events.some(e => getEventDateStr(e) === dateStr)) return "my schedule";
         return "default";
     };
 
-    // 🎯 픽셀 디자인 클래스 완벽 원복! (color: inherit 제거)
+    const pStyle = { fontFamily: "Retro Gaming, DungGeunMo, monospace", fontSize: "15px", margin: 0, textAlign: "center" as const };
+    
     const getPClass = (state: string) => {
         switch(state) {
             case "disable": return "Pixso-paragraph-2_5";
@@ -196,12 +240,12 @@ const Frame72327 = () => {
     const renderDateComponent = (vState: string, pClass: string, day: string) => (
         <Datecomponents 
             datestates={vState} 
-            slot_60_22={<p className={pClass} style={{margin: 0}}>{day}</p>} 
-            slot_62_37={<p className={pClass} style={{margin: 0}}>{day}</p>} 
-            slot_62_31={<p className={pClass} style={{margin: 0}}>{day}</p>} 
-            slot_62_28={<p className={pClass} style={{margin: 0}}>{day}</p>} 
-            slot_60_25={<p className={pClass} style={{margin: 0}}>{day}</p>} 
-            slot_135_168={<p className={pClass} style={{margin: 0}}>{day}</p>} 
+            slot_60_22={<p className={pClass} style={pStyle}>{day}</p>} 
+            slot_62_37={<p className={pClass} style={pStyle}>{day}</p>} 
+            slot_62_31={<p className={pClass} style={pStyle}>{day}</p>} 
+            slot_62_28={<p className={pClass} style={pStyle}>{day}</p>} 
+            slot_60_25={<p className={pClass} style={pStyle}>{day}</p>} 
+            slot_135_168={<p className={pClass} style={pStyle}>{day}</p>} 
         />
     );
 
@@ -217,13 +261,14 @@ const Frame72327 = () => {
         const pClass = getPClass(state);
         const visualState = (hoveredDateStr === dateStr) ? "checked" : state; 
         
+        // 🎯 클릭했을 때도 이벤트 범위를 검색해서 팝업에 정보 띄우기
         const handleClick = (e: any) => {
             e.stopPropagation();
             if (state === "holiday") {
-                const hol = holidays.find(h => getEventDateStr(h) === dateStr);
+                const hol = holidays.find(h => isDateCovered(dateStr, h));
                 setViewModalData({ isOpen: true, title: hol?.summary || "공휴일", isHoliday: true }); 
             } else if (state === "my schedule") {
-                const evnt = events.find(e => getEventDateStr(e) === dateStr);
+                const evnt = events.find(e => isDateCovered(dateStr, e));
                 setViewModalData({ isOpen: true, eventId: evnt?.id, title: evnt?.summary || "일정", isHoliday: false }); 
             } else {
                 openAddModal(dateStr);
@@ -298,7 +343,6 @@ const Frame72327 = () => {
                                     slot_97_162={<div className="hover-target" onClick={(e) => { e.stopPropagation(); setSelectedRegion("JP"); setRegionmenu_52_20("False"); }}><Button2components className="Pixso-instance-97_162" button2state="default" slot_77_120={<p id="77_120_jp" className="Pixso-paragraph-77_120" style={{pointerEvents:"none", margin: 0}}>{"JAPAN"}</p>} /></div>}
                                     slot_97_163={<div className="hover-target" onClick={(e) => { e.stopPropagation(); setSelectedRegion("US"); setRegionmenu_52_20("False"); }}><Button2components className="Pixso-instance-97_163" button2state="default" slot_77_120={<p id="77_120_us" className="Pixso-paragraph-77_120" style={{pointerEvents:"none", margin: 0}}>{"AMERICA"}</p>} /></div>}
                                 />
-
                                 <Editmenu
                                     id="52_23" className="Pixso-instance-52_23 z-30" editmenu="False"
                                     slot_107_320={
@@ -307,12 +351,10 @@ const Frame72327 = () => {
                                         </div>
                                     }
                                 />
-
                                 <Searchmenu 
                                     id="52_26" className="Pixso-instance-52_26 z-20" searchmenu="False" 
                                     slot_107_367={<div className="hover-target" onClick={() => setIsSearchModalOpen(true)}><Button1components className="Pixso-instance-2_176" button1state="default" slot_45_10={<p id="2_177" className="Pixso-paragraph-2_177" style={{pointerEvents:"none", margin: 0}}>{"SEARCH"}</p>} /></div>} 
                                 />
-                                
                                 <Resetbutton 
                                     id="52_28" className="Pixso-instance-52_28 z-10" resetmenu="default" 
                                     slot_143_265={<div className="hover-target" onClick={() => { setCurrentDate(new Date()); setSelectedRegion("KR"); setSearchQuery(""); }}><Button1components className="Pixso-instance-2_186" button1state="default" slot_45_10={<p id="2_187" className="Pixso-paragraph-2_187" style={{pointerEvents:"none", margin: 0}}>{"RESET"}</p>} /></div>} 
