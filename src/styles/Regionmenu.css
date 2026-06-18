@@ -92,5 +92,7 @@
     position: absolute; inset: 0; box-shadow: 2px 2px 1px 0px rgba(0, 0, 0, 0.8) inset; pointer-events: none; mix-blend-mode: normal;
 }
 .Pixso-instance-97_161 .Pixso-symbol-77_126, .Pixso-instance-97_162 .Pixso-symbol-77_126, .Pixso-instance-97_163 .Pixso-symbol-77_126 {
-    width: 114px; height: 25px; position: relative; flex-shrink: 0; display: flex; flex-direction: row; align-items: center; padding: 0px 5px;
+    width: 100% !important; /* 🎯 114px 고정값을 지우고, 무조건 상자 안에 쏙 들어가게 100%로 명령! */
+    box-sizing: border-box !important; /* 🎯 패딩 10px 때문에 뚱뚱해지는 현상을 완벽하게 차단! */
+    height: 25px; position: relative; flex-shrink: 0; display: flex; flex-direction: row; align-items: center; padding: 0px 5px;
 }
