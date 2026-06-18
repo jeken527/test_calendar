@@ -327,6 +327,18 @@ const Frame72327 = () => {
                 .z-30 { position: relative !important; z-index: 30 !important; }
                 .z-20 { position: relative !important; z-index: 20 !important; }
                 .z-10 { position: relative !important; z-index: 10 !important; }
+
+                /* 🎯 4. 월 이동 버튼 전용: 호버 시 바깥쪽 그림자(box-shadow) 완벽 제거 */
+.hide-outer-shadow:hover > div > [class*="Pixso-symbol"], 
+.hide-outer-shadow:hover > [class*="Pixso-symbol"],
+.hide-outer-shadow:hover [class*="Pixso-symbol"] { 
+    box-shadow: none !important; 
+}
+
+/* 혹시 피그마에서 그림자가 별도의 투명 레이어로 렌더링되었을 경우를 대비한 보험 */
+.hide-outer-shadow:hover .shadow-blend-unknown-0 {
+    display: none !important;
+}
             `}</style>
 
             <div id="72_327" className="stroke-wrapper-72_327">
@@ -351,15 +363,15 @@ const Frame72327 = () => {
 
                                 <div style={{ display: "flex", gap: "2px" }}>
                                     <div className="stroke-wrapper-8_14" style={{ width: "22px", height: "22px", position: "relative", backgroundColor: "#ddd", display: "flex", justifyContent: "center", alignItems: "center" }}>
-                                        <img src="/_.svg" alt="minimize" style={{ width: "12px", height: "12px" }} />
+                                        <img src="/Line1.svg" alt="minimize" style={{ width: "12px", height: "12px" }} />
                                         <div className="stroke-8_14" style={{ position: "absolute", inset: 0, border: "1px solid #000", borderTopColor: "#fff", borderLeftColor: "#fff" }}></div>
                                     </div>
                                     <div className="stroke-wrapper-8_14" style={{ width: "22px", height: "22px", position: "relative", backgroundColor: "#ddd", display: "flex", justifyContent: "center", alignItems: "center" }}>
-                                        <img src="/Frame7.svg" alt="maximize" style={{ width: "12px", height: "12px" }} />
+                                        <img src="/Rectangle1.svg" alt="maximize" style={{ width: "12px", height: "12px" }} />
                                         <div className="stroke-8_14" style={{ position: "absolute", inset: 0, border: "1px solid #000", borderTopColor: "#fff", borderLeftColor: "#fff" }}></div>
                                     </div>
                                     <div className="stroke-wrapper-8_14" style={{ width: "22px", height: "22px", position: "relative", backgroundColor: "#ddd", display: "flex", justifyContent: "center", alignItems: "center" }}>
-                                        <img src="/Line.svg" alt="close" style={{ width: "12px", height: "12px" }} />
+                                        <img src="/Frame7.svg" alt="close" style={{ width: "12px", height: "12px" }} />
                                         <div className="stroke-8_14" style={{ position: "absolute", inset: 0, border: "1px solid #000", borderTopColor: "#fff", borderLeftColor: "#fff" }}></div>
                                     </div>
                                 </div>
@@ -450,20 +462,20 @@ const Frame72327 = () => {
                                         <div className="frame-content-68_321">
                                             <div id="66_320" className="Pixso-frame-66_320">
                                                 <div className="frame-content-66_320">
-                                                    {/* 🎯 이전 달로 이동 버튼: 그림자 + B0B0B0 배경색 + 흰색 테두리 */}
-                                                    <div className="hover-target hover-shadow-color" onClick={() => setRightDate(new Date(rightDate.getFullYear(), rightDate.getMonth() - 1, 1))}>
-                                                        <Button1components className="Pixso-instance-58_13" button1state="default" slot_45_10={<p id="2_44" className="Pixso-paragraph-2_44" style={{pointerEvents:"none", margin: 0}}>{"<"}</p>} />
-                                                    </div>
+                                                    {/* 🎯 이전 달로 이동 버튼: 바깥 그림자 제거 클래스(hide-outer-shadow) 추가! */}
+<div className="hover-target hover-shadow-color hide-outer-shadow" onClick={() => setRightDate(new Date(rightDate.getFullYear(), rightDate.getMonth() - 1, 1))}>
+    <Button1components className="Pixso-instance-58_13" button1state="default" slot_45_10={<p id="2_44" className="Pixso-paragraph-2_44" style={{pointerEvents:"none", margin: 0}}>{"<"}</p>} />
+</div>
                                                     <div id="66_208" className="Pixso-frame-66_208">
                                                         <div className="frame-content-66_208">
                                                             <div id="66_209" className="Pixso-frame-66_209"><div className="frame-content-66_209"><p id="66_210" className="Pixso-paragraph-66_210" style={{fontFamily:"Retro Gaming, monospace", margin: 0}}>{rightDate.getFullYear()}</p></div></div>
                                                             <div id="66_211" className="Pixso-frame-66_211"><div className="frame-content-66_211"><p id="66_212" className="Pixso-paragraph-66_212" style={{fontFamily:"Retro Gaming, monospace", margin: 0}}>{String(rightDate.getMonth() + 1).padStart(2, '0')}</p></div></div>
                                                         </div>
                                                     </div>
-                                                    {/* 🎯 다음 달로 이동 버튼: 그림자 + B0B0B0 배경색 + 흰색 테두리 */}
-                                                    <div className="hover-target hover-shadow-color" onClick={() => setRightDate(new Date(rightDate.getFullYear(), rightDate.getMonth() + 1, 1))}>
-                                                        <Button1components className="Pixso-instance-129_172" button1state="default" slot_45_10={<p id="2_40" className="Pixso-paragraph-2_40" style={{pointerEvents:"none", margin: 0}}>{">"}</p>} />
-                                                    </div>
+                                                    {/* 🎯 다음 달로 이동 버튼: 바깥 그림자 제거 클래스(hide-outer-shadow) 추가! */}
+<div className="hover-target hover-shadow-color hide-outer-shadow" onClick={() => setRightDate(new Date(rightDate.getFullYear(), rightDate.getMonth() + 1, 1))}>
+    <Button1components className="Pixso-instance-129_172" button1state="default" slot_45_10={<p id="2_40" className="Pixso-paragraph-2_40" style={{pointerEvents:"none", margin: 0}}>{">"}</p>} />
+</div>
                                                 </div>
                                             </div>
                                             <div id="66_213" className="Pixso-frame-66_213">
