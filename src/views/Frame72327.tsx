@@ -10,7 +10,6 @@ import Datecomponents from "@/components/Datecomponents";
 import Dateselectbutton1 from "@/components/Dateselectbutton1";
 import Dateselectbutton2 from "@/components/Dateselectbutton2";
 
-// 스타일 시트 임포트
 import "@/styles/Frame72327.css";
 import "@/styles/Frame107433.css"; 
 import "@/styles/Frame97172.css"; 
@@ -33,16 +32,14 @@ const HOLIDAY_CALENDARS: Record<string, string> = {
 };
 
 const Frame72327 = () => {
-    // ----------------------------------------------------
-    // 1. 상태 관리
-    // ----------------------------------------------------
     const [regionmenu_52_20, setRegionmenu_52_20] = useState("False");
     const [hoveredDateStr, setHoveredDateStr] = useState<string | null>(null);
 
-    // ----------------------------------------------------
-    // 2. 엔진 상태 (데이터 및 팝업창 컨트롤)
-    // ----------------------------------------------------
-    const [currentDate, setCurrentDate] = useState(new Date());
+    // 🎯 달력 엔진 분리: 오늘은 현실 시간 기준, 오른쪽 달력만 이동 가능하도록 설정
+    const today = new Date();
+    const leftDate = new Date(today.getFullYear(), today.getMonth(), 1);
+    const [rightDate, setRightDate] = useState(new Date(today.getFullYear(), today.getMonth() + 1, 1));
+
     const [selectedRegion, setSelectedRegion] = useState("KR");
     const [myCalendarId, setMyCalendarId] = useState("primary");
     const [holidays, setHolidays] = useState<any[]>([]);
@@ -62,9 +59,6 @@ const Frame72327 = () => {
     const [searchQuery, setSearchQuery] = useState("");
     const searchResults = searchQuery.trim() ? events.filter(e => (e.summary || "").toLowerCase().includes(searchQuery.toLowerCase())) : [];
 
-    // ----------------------------------------------------
-    // 시간 및 범위 처리 헬퍼 함수
-    // ----------------------------------------------------
     const getLocalDateStr = (d: Date) => {
         const year = d.getFullYear();
         const month = String(d.getMonth() + 1).padStart(2, '0');
@@ -75,9 +69,7 @@ const Frame72327 = () => {
     const isDateCovered = (targetDateStr: string, event: any) => {
         const start = event.start?.date || event.start?.dateTime?.substring(0, 10);
         const end = event.end?.date || event.end?.dateTime?.substring(0, 10);
-        
         if (!start) return false;
-        
         if (event.end?.date) {
             if (start === end) return targetDateStr === start;
             return targetDateStr >= start && targetDateStr < end;
@@ -128,7 +120,7 @@ const Frame72327 = () => {
 
     useEffect(() => {
         if (isAuthenticated) fetchCalendarData();
-    }, [isAuthenticated, currentDate, selectedRegion]);
+    }, [isAuthenticated, rightDate, selectedRegion]); // rightDate가 변할 때마다 데이터 갱신
 
     const fetchCalendarData = async () => {
         try {
@@ -137,8 +129,9 @@ const Frame72327 = () => {
             const targetId = targetCal ? targetCal.id : "primary";
             setMyCalendarId(targetId);
 
-            const timeMin = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString();
-            const timeMax = new Date(currentDate.getFullYear(), currentDate.getMonth() + 4, 0).toISOString();
+            // 왼쪽 달력부터 오른쪽 달력 기준 +4개월까지 넉넉히 데이터를 가져옵니다.
+            const timeMin = new Date(leftDate.getFullYear(), leftDate.getMonth(), 1).toISOString();
+            const timeMax = new Date(rightDate.getFullYear(), rightDate.getMonth() + 4, 0).toISOString();
             
             const holidayResp = await window.gapi.client.calendar.events.list({
                 calendarId: HOLIDAY_CALENDARS[selectedRegion], timeMin, timeMax, singleEvents: true,
@@ -192,9 +185,6 @@ const Frame72327 = () => {
         setEventStartDate(dateStr); setEventEndDate(dateStr); setIsAddModalOpen(true);
     };
 
-    // ----------------------------------------------------
-    // 달력 렌더링
-    // ----------------------------------------------------
     const getGridDates = (year: number, month: number) => {
         const grid = [];
         const startDay = new Date(year, month, 1).getDay();
@@ -232,15 +222,7 @@ const Frame72327 = () => {
     };
 
     const renderDateComponent = (vState: string, pClass: string, day: string) => (
-        <Datecomponents 
-            datestates={vState} 
-            slot_60_22={<p className={pClass} style={pStyle}>{day}</p>} 
-            slot_62_37={<p className={pClass} style={pStyle}>{day}</p>} 
-            slot_62_31={<p className={pClass} style={pStyle}>{day}</p>} 
-            slot_62_28={<p className={pClass} style={pStyle}>{day}</p>} 
-            slot_60_25={<p className={pClass} style={pStyle}>{day}</p>} 
-            slot_135_168={<p className={pClass} style={pStyle}>{day}</p>} 
-        />
+        <Datecomponents datestates={vState} slot_60_22={<p className={pClass} style={pStyle}>{day}</p>} slot_62_37={<p className={pClass} style={pStyle}>{day}</p>} slot_62_31={<p className={pClass} style={pStyle}>{day}</p>} slot_62_28={<p className={pClass} style={pStyle}>{day}</p>} slot_60_25={<p className={pClass} style={pStyle}>{day}</p>} slot_135_168={<p className={pClass} style={pStyle}>{day}</p>} />
     );
 
     const renderCell = (item: any, uniqueKey: string) => {
@@ -283,8 +265,6 @@ const Frame72327 = () => {
         );
     };
 
-    const leftDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-    const rightDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 2, 1);
     const leftGrid = getGridDates(leftDate.getFullYear(), leftDate.getMonth());
     const rightGrid = getGridDates(rightDate.getFullYear(), rightDate.getMonth());
 
@@ -313,49 +293,45 @@ const Frame72327 = () => {
                 <div className="Pixso-frame-72_327">
                     <div className="frame-content-72_327">
                         
-                        <div id="45_8" className="Pixso-frame-45_8" style={{ cursor: "pointer", zIndex: 9999, position: "relative" }}>
-    <div className="frame-content-45_8" style={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center" }}>
-        
-        {/* 왼쪽: 타이틀 텍스트와 로그인 상태 램프 */}
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }} onClick={handleLogin}>
-            <div id="129_166" className="Pixso-frame-129_166">
-                <p id="45_7" className="Pixso-paragraph-45_7" style={{ fontFamily: "Retro Gaming, DungGeunMo, monospace", margin: 0, paddingLeft: "4px" }}>
-                    CALENDAR
-                </p>
-            </div>
-            
-            <div id="10_34" className="stroke-wrapper-10_34" style={{ width: "12px", height: "12px", position: "relative", marginLeft: "4px" }}>
-                {/* 🎯 로그인 안됨(회색 #555), 로그인 됨(빨간색 #ff0000) */}
-                <div className="Pixso-rectangle-10_34" style={{ position: "absolute", inset: 0, backgroundColor: isAuthenticated ? "#ff0000" : "#555555" }}></div>
-                <div className="stroke-10_34" style={{ position: "absolute", inset: 0, border: "1px solid #fff", borderTopColor: "#000", borderLeftColor: "#000" }}></div>
-            </div>
-        </div>
+                        {/* 🎯 메인 프레임 타이틀 바 (CALENDAR 및 22px SVG 버튼들) */}
+                        <div id="45_8" className="Pixso-frame-45_8" style={{ cursor: "default", zIndex: 9999, position: "relative" }}>
+                            <div className="frame-content-45_8" style={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center" }}>
+                                
+                                <div style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }} onClick={handleLogin}>
+                                    <div id="129_166" className="Pixso-frame-129_166" style={{ padding: 0, margin: 0 }}>
+                                        <p id="45_7" className="Pixso-paragraph-45_7" style={{ fontFamily: "Retro Gaming, DungGeunMo, monospace", margin: 0, padding: 0 }}>
+                                            CALENDAR
+                                        </p>
+                                    </div>
+                                    <div id="10_34" className="stroke-wrapper-10_34" style={{ width: "12px", height: "12px", position: "relative", marginLeft: "4px" }}>
+                                        <div className="Pixso-rectangle-10_34" style={{ position: "absolute", inset: 0, backgroundColor: isAuthenticated ? "#ff0000" : "#555555" }}></div>
+                                        <div className="stroke-10_34" style={{ position: "absolute", inset: 0, border: "1px solid #fff", borderTopColor: "#000", borderLeftColor: "#000" }}></div>
+                                    </div>
+                                </div>
 
-        {/* 오른쪽: 윈도우 98 스타일 창 조절 버튼 3형제 (모형) */}
-        <div style={{ display: "flex", gap: "2px" }}>
-            {/* 최소화 버튼 (_) */}
-            <div className="stroke-wrapper-8_14" style={{ width: "16px", height: "14px", position: "relative", backgroundColor: "#ddd", display: "flex", justifyContent: "center", alignItems: "flex-end", paddingBottom: "2px" }}>
-                <div style={{ width: "8px", height: "2px", backgroundColor: "#000" }}></div>
-                <div className="stroke-8_14" style={{ position: "absolute", inset: 0, border: "1px solid #000", borderTopColor: "#fff", borderLeftColor: "#fff" }}></div>
-            </div>
-            {/* 최대화 버튼 (ㅁ) */}
-            <div className="stroke-wrapper-8_14" style={{ width: "16px", height: "14px", position: "relative", backgroundColor: "#ddd", display: "flex", justifyContent: "center", alignItems: "center" }}>
-                <div style={{ width: "8px", height: "6px", border: "1px solid #000", borderTopWidth: "2px" }}></div>
-                <div className="stroke-8_14" style={{ position: "absolute", inset: 0, border: "1px solid #000", borderTopColor: "#fff", borderLeftColor: "#fff" }}></div>
-            </div>
-            {/* 닫기 버튼 (X) */}
-            <div className="stroke-wrapper-8_14" style={{ width: "16px", height: "14px", position: "relative", backgroundColor: "#ddd", display: "flex", justifyContent: "center", alignItems: "center" }}>
-                <div style={{ fontFamily: "Retro Gaming, monospace", fontSize: "10px", fontWeight: "bold", lineHeight: 1, paddingBottom: "1px" }}>x</div>
-                <div className="stroke-8_14" style={{ position: "absolute", inset: 0, border: "1px solid #000", borderTopColor: "#fff", borderLeftColor: "#fff" }}></div>
-            </div>
-        </div>
+                                <div style={{ display: "flex", gap: "2px" }}>
+                                    {/* 최소화 버튼 (_) - 22x22px 적용, public 폴더의 _.svg 사용 */}
+                                    <div className="stroke-wrapper-8_14" style={{ width: "22px", height: "22px", position: "relative", backgroundColor: "#ddd", display: "flex", justifyContent: "center", alignItems: "center" }}>
+                                        <img src="/_.svg" alt="minimize" style={{ width: "12px", height: "12px" }} />
+                                        <div className="stroke-8_14" style={{ position: "absolute", inset: 0, border: "1px solid #000", borderTopColor: "#fff", borderLeftColor: "#fff" }}></div>
+                                    </div>
+                                    {/* 최대화 버튼 (ㅁ) - 22x22px 적용, public 폴더의 Frame7.svg 사용 */}
+                                    <div className="stroke-wrapper-8_14" style={{ width: "22px", height: "22px", position: "relative", backgroundColor: "#ddd", display: "flex", justifyContent: "center", alignItems: "center" }}>
+                                        <img src="/Frame7.svg" alt="maximize" style={{ width: "12px", height: "12px" }} />
+                                        <div className="stroke-8_14" style={{ position: "absolute", inset: 0, border: "1px solid #000", borderTopColor: "#fff", borderLeftColor: "#fff" }}></div>
+                                    </div>
+                                    {/* 닫기 버튼 (X) - 22x22px 적용, public 폴더의 Line.svg 사용 */}
+                                    <div className="stroke-wrapper-8_14" style={{ width: "22px", height: "22px", position: "relative", backgroundColor: "#ddd", display: "flex", justifyContent: "center", alignItems: "center" }}>
+                                        <img src="/Line.svg" alt="close" style={{ width: "12px", height: "12px" }} />
+                                        <div className="stroke-8_14" style={{ position: "absolute", inset: 0, border: "1px solid #000", borderTopColor: "#fff", borderLeftColor: "#fff" }}></div>
+                                    </div>
+                                </div>
 
-    </div>
-</div>
+                            </div>
+                        </div>
 
                         <div id="52_30" className="Pixso-frame-52_30" style={{ position: "relative", zIndex: 9000, overflow: "visible" }}>
                             <div className="frame-content-52_30">
-                                
                                 <Regionmenu
                                     id="52_20" className="Pixso-instance-52_20 z-40" regionmenu={regionmenu_52_20}
                                     slot_97_144={<div className="hover-target" onClick={(e) => { e.stopPropagation(); setRegionmenu_52_20("True"); }}><Button1components className="Pixso-instance-2_188" button1state="default" slot_45_10={<p id="2_189" className="Pixso-paragraph-2_189" style={{pointerEvents:"none", margin: 0}}>{"REGION"}</p>} /></div>}
@@ -378,7 +354,12 @@ const Frame72327 = () => {
                                 />
                                 <Resetbutton 
                                     id="52_28" className="Pixso-instance-52_28 z-10" resetmenu="default" 
-                                    slot_143_265={<div className="hover-target" onClick={() => { setCurrentDate(new Date()); setSelectedRegion("KR"); setSearchQuery(""); }}><Button1components className="Pixso-instance-2_186" button1state="default" slot_45_10={<p id="2_187" className="Pixso-paragraph-2_187" style={{pointerEvents:"none", margin: 0}}>{"RESET"}</p>} /></div>} 
+                                    slot_143_265={<div className="hover-target" onClick={() => { 
+                                        const now = new Date();
+                                        setRightDate(new Date(now.getFullYear(), now.getMonth() + 1, 1)); 
+                                        setSelectedRegion("KR"); 
+                                        setSearchQuery(""); 
+                                    }}><Button1components className="Pixso-instance-2_186" button1state="default" slot_45_10={<p id="2_187" className="Pixso-paragraph-2_187" style={{pointerEvents:"none", margin: 0}}>{"RESET"}</p>} /></div>} 
                                 />
                             </div>
                         </div>
@@ -425,7 +406,8 @@ const Frame72327 = () => {
                                         <div className="frame-content-68_321">
                                             <div id="66_320" className="Pixso-frame-66_320">
                                                 <div className="frame-content-66_320">
-                                                    <div className="hover-target" onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1))}>
+                                                    {/* 🎯 오른쪽 달력만 이동하도록 변경! */}
+                                                    <div className="hover-target" onClick={() => setRightDate(new Date(rightDate.getFullYear(), rightDate.getMonth() - 1, 1))}>
                                                         <Button1components className="Pixso-instance-58_13" button1state="default" slot_45_10={<p id="2_44" className="Pixso-paragraph-2_44" style={{pointerEvents:"none", margin: 0}}>{"<"}</p>} />
                                                     </div>
                                                     <div id="66_208" className="Pixso-frame-66_208">
@@ -434,7 +416,7 @@ const Frame72327 = () => {
                                                             <div id="66_211" className="Pixso-frame-66_211"><div className="frame-content-66_211"><p id="66_212" className="Pixso-paragraph-66_212" style={{fontFamily:"Retro Gaming, monospace", margin: 0}}>{String(rightDate.getMonth() + 1).padStart(2, '0')}</p></div></div>
                                                         </div>
                                                     </div>
-                                                    <div className="hover-target" onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1))}>
+                                                    <div className="hover-target" onClick={() => setRightDate(new Date(rightDate.getFullYear(), rightDate.getMonth() + 1, 1))}>
                                                         <Button1components className="Pixso-instance-129_172" button1state="default" slot_45_10={<p id="2_40" className="Pixso-paragraph-2_40" style={{pointerEvents:"none", margin: 0}}>{">"}</p>} />
                                                     </div>
                                                 </div>
@@ -582,7 +564,6 @@ const Frame72327 = () => {
                                         </div>
                                     </div>
                                     
-                                    {/* 🎯 [수정 1] DELETE 버튼을 조건 없이 렌더링하되 휴일일 때만 투명인간(visibility: hidden)으로 만들어 밸런스를 맞춥니다 */}
                                     <div 
                                         className="hover-target" 
                                         onClick={() => { if (!viewModalData.isHoliday && viewModalData.eventId) handleDeleteEvent(viewModalData.eventId); }} 
@@ -610,37 +591,33 @@ const Frame72327 = () => {
                     style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", backgroundColor: "rgba(0,0,0,0.6)", zIndex: 99999, display: "flex", justifyContent: "center", alignItems: "center" }}
                     onClick={() => setIsSearchModalOpen(false)} 
                 >
-                    {/* 🎯 [수정 2] 가로폭을 280px로 늘려줍니다 */}
                     <div style={{ width: "280px" }} onClick={(e) => e.stopPropagation()}>
-                        
-                        {/* 🎯 [수정 3] 검색 결과가 늘어나면 높이도 알아서 쭉쭉 늘어나게 height: "auto"를 줍니다 */}
                         <div className="stroke-wrapper-120_147" style={{ height: "auto", minHeight: "200px" }}>
                             <div className="Pixso-frame-120_147" style={{ justifyContent: "flex-start", height: "auto" }}>
-                                <div className="frame-content-120_147" style={{ alignItems: "stretch", padding: "5px" }}>
+                                <div className="frame-content-120_147" style={{ alignItems: "stretch", padding: "12px" }}>
                                     
                                     <div id="119_132" className="Pixso-frame-119_132" style={{ width: "100%" }}>
-                                        <div className="frame-content-119_132"style={{ width: "100%", display: "flex", justifyContent: "space-between" }}>
+                                        <div className="frame-content-119_132" style={{ width: "100%", display: "flex", justifyContent: "space-between" }}>
                                             <div id="139_127" className="Pixso-frame-139_127">
-                                                {/* 💡 1. 껍데기 박스의 중앙 정렬을 파괴하고 강제 왼쪽 정렬(flex-start) 및 여백(padding) 제거 */}
+                                                {/* 🎯 SEARCH 글씨 강제 왼쪽 밀착 패딩 제거 */}
                                                 <div className="frame-content-139_127" style={{ display: "flex", justifyContent: "flex-start", padding: 0 }}>
-                                                {/* 💡 2. 텍스트 박스의 폭(width) 제한을 없애고(auto), 글씨를 왼쪽(left)으로 쫙 붙임 */}
-                                                <p id="139_128" className="Pixso-paragraph-139_128" style={{ margin: 0, textAlign: "left", width: "auto" }}>{"SEARCH"}</p>
+                                                    <p id="139_128" className="Pixso-paragraph-139_128" style={{ margin: 0, textAlign: "left", width: "auto" }}>{"SEARCH"}</p>
+                                                </div>
                                             </div>
-                                        </div>
                                             <div className="hover-target" onClick={() => setIsSearchModalOpen(false)}>
                                                 <Button3components id="135_159" className="Pixso-instance-135_159" button3state="default" />
                                             </div>
                                         </div>
                                     </div>
                                     
-                                    <div style={{ marginTop: "6px", border: "2px solid", borderTopColor: "#888", borderLeftColor: "#888", borderBottomColor: "#fff", borderRightColor: "#fff", backgroundColor: "#fff" }}>
+                                    <div style={{ marginTop: "10px", border: "2px solid", borderTopColor: "#888", borderLeftColor: "#888", borderBottomColor: "#fff", borderRightColor: "#fff", backgroundColor: "#fff" }}>
                                         <input 
                                             autoFocus type="text" placeholder="KEYWORD..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} 
                                             style={{ width: "100%", padding: "6px", border: "none", outline: "none", fontFamily: "Retro Gaming, DungGeunMo, monospace", fontSize: "12px", boxSizing: "border-box" }} 
                                         />
                                     </div>
 
-                                    <div style={{ marginTop: "6px", minHeight: "100px", maxHeight: "150px", overflowY: "auto", backgroundColor: "#fff", border: "2px solid", borderTopColor: "#888", borderLeftColor: "#888", borderBottomColor: "#fff", borderRightColor: "#fff", padding: "8px", fontFamily: "DungGeunMo, monospace", fontSize: "12px", boxSizing: "border-box" }}>
+                                    <div style={{ marginTop: "10px", minHeight: "100px", maxHeight: "150px", overflowY: "auto", backgroundColor: "#fff", border: "2px solid", borderTopColor: "#888", borderLeftColor: "#888", borderBottomColor: "#fff", borderRightColor: "#fff", padding: "8px", fontFamily: "DungGeunMo, monospace", fontSize: "12px", boxSizing: "border-box" }}>
                                         {searchQuery.trim() === "" ? (
                                             <span style={{ color: "#888" }}>Waiting for input...</span>
                                         ) : searchResults.length === 0 ? (
