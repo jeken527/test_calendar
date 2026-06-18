@@ -1,183 +1,96 @@
 /* ========================================================
-   Regionmenu.css (중복 제거 및 완벽 교정본)
+   Regionmenu.css (바운스 방지 및 드롭다운 위치 전담)
    ======================================================== */
 
 /* 1. 컴포넌트 가장 바깥 껍데기: 드롭다운의 기준점(나침반) 역할 */
-.component-97_172 {
+.component-97_172,
+.Pixso-symbol-97_172 {
     position: relative !important; 
     width: 78px !important;
     height: 25px !important;
     display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
-.Pixso-symbol-97_172 {
-    position: relative !important;
-    width: 100% !important;
-    height: 100% !important;
+/* 2. 🚨 꿀렁거림(바운스) 버그 해결: False와 True 껍데기 완벽히 포개기 🚨 */
+.Pixso-symbol-97_171, /* 닫힌 상태 버튼 */
+.Pixso-symbol-97_170  /* 열린 상태 껍데기 */ {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    margin: 0 !important;
 }
 
-/* 2. REGION 버튼 영역: 더 이상 도망가지 않게 묶음 */
 .Pixso-symbol-97_171 {
     width: 78px !important;
     height: 25px !important;
-    position: relative !important;
-    left: 0 !important;
-    top: 0 !important;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
+    z-index: 10 !important;
 }
 
-/* 3. 🎯 드롭다운 알맹이 상자: 버튼 바로 밑(top: 25px) 허공에 매달기 */
+.Pixso-symbol-97_170 {
+    width: 120px !important; 
+    height: auto !important; 
+    z-index: 99999 !important; /* 캘린더 화면 위로 덮기 */
+    display: block !important;
+}
+
+/* 3. 🎯 드롭다운 알맹이 상자: 버튼(25px) 바로 밑 허공에 매달기 */
 .stroke-wrapper-97_160,
 #97_160 {
     position: absolute !important;
     top: 25px !important;  
     left: 0px !important;  
     width: 120px !important;
-    height: 90px !important;
-    z-index: 99999 !important; /* 캘린더 위에 렌더링 */
-    display: flex;
-    flex-shrink: 0;
+    height: auto !important;
 }
 
 /* ========================================================
-   이하 버튼 및 드롭다운 내부 디자인 요소 (중복 없이 정리됨)
+   이하 버튼 및 드롭다운 내부 디자인 요소 
    ======================================================== */
 .Pixso-instance-97_144,
-.Pixso-instance-97_159 {
-    width: 78px;
-    height: 25px;
-}
+.Pixso-instance-97_159 { width: 78px; height: 25px; }
 
 .Pixso-frame-97_160 {
-    width: 100%;
-    height: 100%;
-    position: relative;
-    flex-shrink: 0;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: flex-start;
+    width: 100%; height: 100%; position: relative; flex-shrink: 0; display: flex;
+    flex-direction: column; justify-content: center; align-items: flex-start;
     background-color: rgba(221, 221, 221, 1);
 }
-
 .frame-content-97_160 {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    align-items: flex-start;
-    justify-content: center;
-    padding: 0px 3px 0px 3px;
-    width: 100%;
-    height: 100%;
-    position: relative;
+    display: flex; flex-direction: column; gap: 2px; align-items: flex-start;
+    justify-content: center; padding: 0px 3px 0px 3px; width: 100%; height: 100%; position: relative;
 }
-
 .stroke-97_160 {
-    position: absolute;
-    inset: 0px;
-    pointer-events: none;
-    border-width: 2px 0px 0px 2px;
-    border-style: solid;
-    box-sizing: border-box;
-    border-color: rgba(255, 255, 255, 1);
+    position: absolute; inset: 0px; pointer-events: none; border-width: 2px 0px 0px 2px;
+    border-style: solid; box-sizing: border-box; border-color: rgba(255, 255, 255, 1);
 }
-
 .shadow-blend-unknown-0 {
-    position: absolute;
-    inset: 0;
-    box-shadow: -3px -3px 2px 0px rgba(0, 0, 0, 0.7) inset;
-    pointer-events: none;
-    mix-blend-mode: normal;
+    position: absolute; inset: 0; box-shadow: -3px -3px 2px 0px rgba(0, 0, 0, 0.7) inset;
+    pointer-events: none; mix-blend-mode: normal;
 }
-
-.Pixso-instance-97_161,
-.Pixso-instance-97_162,
-.Pixso-instance-97_163 {
-    width: 114px;
-    height: 25px;
+.Pixso-instance-97_161, .Pixso-instance-97_162, .Pixso-instance-97_163 {
+    width: 114px; height: 25px;
 }
-
 .Pixso-paragraph-77_120 {
-    font-size: 15px;
-    font-weight: 400;
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    letter-spacing: 0em;
-    color: rgba(0, 0, 0, 1);
-    width: auto;
-    height: auto;
-    position: relative;
-    flex-shrink: 0;
-    white-space: pre;
-    flex-grow: 0;
+    font-size: 15px; font-weight: 400; text-align: center; display: flex;
+    flex-direction: column; justify-content: center; letter-spacing: 0em; color: rgba(0, 0, 0, 1);
+    width: auto; height: auto; position: relative; flex-shrink: 0; white-space: pre; flex-grow: 0;
 }
-
-/* 버튼 기성 스타일 */
 .Pixso-instance-97_144 .Pixso-symbol-47_17 {
-    width: 78px;
-    height: 25px;
-    overflow: hidden;
-    position: relative;
-    flex-shrink: 0;
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    padding: 4px;
-    background-color: rgba(221, 221, 221, 1);
+    width: 78px; height: 25px; overflow: hidden; position: relative; flex-shrink: 0; display: flex;
+    flex-direction: row; justify-content: center; align-items: center; padding: 4px; background-color: rgba(221, 221, 221, 1);
 }
-
 .Pixso-instance-97_159 .Pixso-symbol-47_16 {
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    position: relative;
-    flex-shrink: 0;
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    padding: 4px;
-    background-color: rgba(176, 176, 176, 1);
+    width: 100%; height: 100%; overflow: hidden; position: relative; flex-shrink: 0; display: flex;
+    flex-direction: row; justify-content: center; align-items: center; padding: 4px; background-color: rgba(176, 176, 176, 1);
 }
-
-.Pixso-instance-97_159 .stroke-wrapper-47_16 {
-    width: 78px;
-    height: 25px;
-    display: flex;
-    flex-shrink: 0;
-}
-
+.Pixso-instance-97_159 .stroke-wrapper-47_16 { width: 78px; height: 25px; display: flex; flex-shrink: 0; }
 .Pixso-instance-97_159 .stroke-47_16 {
-    inset: 0px;
-    pointer-events: none;
-    border-width: 0px 1px 1px 0px;
-    border-style: solid;
-    box-sizing: border-box;
-    border-color: rgba(255, 255, 255, 1);
+    inset: 0px; pointer-events: none; border-width: 0px 1px 1px 0px; border-style: solid; box-sizing: border-box; border-color: rgba(255, 255, 255, 1);
 }
-
 .Pixso-instance-97_159 .Pixso-symbol-47_16 .shadow-blend-unknown-0 {
-    position: absolute;
-    inset: 0;
-    box-shadow: 2px 2px 1px 0px rgba(0, 0, 0, 0.8) inset;
-    pointer-events: none;
-    mix-blend-mode: normal;
+    position: absolute; inset: 0; box-shadow: 2px 2px 1px 0px rgba(0, 0, 0, 0.8) inset; pointer-events: none; mix-blend-mode: normal;
 }
-
-.Pixso-instance-97_161 .Pixso-symbol-77_126,
-.Pixso-instance-97_162 .Pixso-symbol-77_126,
-.Pixso-instance-97_163 .Pixso-symbol-77_126 {
-    width: 114px;
-    height: 25px;
-    position: relative;
-    flex-shrink: 0;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    padding: 0px 5px;
+.Pixso-instance-97_161 .Pixso-symbol-77_126, .Pixso-instance-97_162 .Pixso-symbol-77_126, .Pixso-instance-97_163 .Pixso-symbol-77_126 {
+    width: 114px; height: 25px; position: relative; flex-shrink: 0; display: flex; flex-direction: row; align-items: center; padding: 0px 5px;
 }
