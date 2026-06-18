@@ -593,24 +593,26 @@ const Frame72327 = () => {
                                     <div id="119_132" className="Pixso-frame-119_132" style={{ width: "100%" }}>
                                         <div className="frame-content-119_132"style={{ width: "100%", display: "flex", justifyContent: "space-between" }}>
                                             <div id="139_127" className="Pixso-frame-139_127">
-                                                <div className="frame-content-139_127">
-                                                    <p id="139_128" className="Pixso-paragraph-139_128" style={{margin: 0}}>{"SEARCH"}</p>
-                                                </div>
+                                                {/* 💡 1. 껍데기 박스의 중앙 정렬을 파괴하고 강제 왼쪽 정렬(flex-start) 및 여백(padding) 제거 */}
+                                                <div className="frame-content-139_127" style={{ display: "flex", justifyContent: "flex-start", padding: 0 }}>
+                                                {/* 💡 2. 텍스트 박스의 폭(width) 제한을 없애고(auto), 글씨를 왼쪽(left)으로 쫙 붙임 */}
+                                                <p id="139_128" className="Pixso-paragraph-139_128" style={{ margin: 0, textAlign: "left", width: "auto" }}>{"SEARCH"}</p>
                                             </div>
+                                        </div>
                                             <div className="hover-target" onClick={() => setIsSearchModalOpen(false)}>
                                                 <Button3components id="135_159" className="Pixso-instance-135_159" button3state="default" />
                                             </div>
                                         </div>
                                     </div>
                                     
-                                    <div style={{ marginTop: "10px", border: "2px solid", borderTopColor: "#888", borderLeftColor: "#888", borderBottomColor: "#fff", borderRightColor: "#fff", backgroundColor: "#fff" }}>
+                                    <div style={{ marginTop: "6px", border: "2px solid", borderTopColor: "#888", borderLeftColor: "#888", borderBottomColor: "#fff", borderRightColor: "#fff", backgroundColor: "#fff" }}>
                                         <input 
                                             autoFocus type="text" placeholder="KEYWORD..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} 
                                             style={{ width: "100%", padding: "6px", border: "none", outline: "none", fontFamily: "Retro Gaming, DungGeunMo, monospace", fontSize: "12px", boxSizing: "border-box" }} 
                                         />
                                     </div>
 
-                                    <div style={{ marginTop: "10px", minHeight: "100px", maxHeight: "150px", overflowY: "auto", backgroundColor: "#fff", border: "2px solid", borderTopColor: "#888", borderLeftColor: "#888", borderBottomColor: "#fff", borderRightColor: "#fff", padding: "8px", fontFamily: "DungGeunMo, monospace", fontSize: "12px", boxSizing: "border-box" }}>
+                                    <div style={{ marginTop: "6px", minHeight: "100px", maxHeight: "150px", overflowY: "auto", backgroundColor: "#fff", border: "2px solid", borderTopColor: "#888", borderLeftColor: "#888", borderBottomColor: "#fff", borderRightColor: "#fff", padding: "8px", fontFamily: "DungGeunMo, monospace", fontSize: "12px", boxSizing: "border-box" }}>
                                         {searchQuery.trim() === "" ? (
                                             <span style={{ color: "#888" }}>Waiting for input...</span>
                                         ) : searchResults.length === 0 ? (
