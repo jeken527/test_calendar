@@ -56,8 +56,18 @@ const Frame72327 = () => {
     const [viewModalData, setViewModalData] = useState<{ isOpen: boolean; eventId?: string; title: string; isHoliday: boolean }>({ isOpen: false, title: "", isHoliday: false });
     
     const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
-    const [searchQuery, setSearchQuery] = useState("");
-    const searchResults = searchQuery.trim() ? events.filter(e => (e.summary || "").toLowerCase().includes(searchQuery.toLowerCase())) : [];
+const [searchQuery, setSearchQuery] = useState("");
+
+// 🎯 내 일정(events)과 공휴일(holidays)을 합친 뒤 검색하고, 날짜순으로 정렬까지 해줍니다!
+const searchResults = searchQuery.trim() 
+    ? [...events, ...holidays]
+        .filter(e => (e.summary || "").toLowerCase().includes(searchQuery.toLowerCase()))
+        .sort((a, b) => {
+            const dateA = a.start?.date || a.start?.dateTime || "";
+            const dateB = b.start?.date || b.start?.dateTime || "";
+            return dateA.localeCompare(dateB); // 날짜 오름차순 정렬
+        })
+    : [];
 
     const getLocalDateStr = (d: Date) => {
         const year = d.getFullYear();
@@ -610,14 +620,14 @@ const Frame72327 = () => {
                                         </div>
                                     </div>
                                     
-                                    <div style={{ marginTop: "6px", border: "2px solid", borderTopColor: "#888", borderLeftColor: "#888", borderBottomColor: "#fff", borderRightColor: "#fff", backgroundColor: "#fff" }}>
+                                    <div style={{ marginTop: "4px", border: "2px solid", borderTopColor: "#888", borderLeftColor: "#888", borderBottomColor: "#fff", borderRightColor: "#fff", backgroundColor: "#fff" }}>
                                         <input 
                                             autoFocus type="text" placeholder="KEYWORD..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} 
                                             style={{ width: "100%", padding: "6px", border: "none", outline: "none", fontFamily: "Retro Gaming, DungGeunMo, monospace", fontSize: "12px", boxSizing: "border-box" }} 
                                         />
                                     </div>
 
-                                    <div style={{ marginTop: "6px", minHeight: "100px", maxHeight: "150px", overflowY: "auto", backgroundColor: "#fff", border: "2px solid", borderTopColor: "#888", borderLeftColor: "#888", borderBottomColor: "#fff", borderRightColor: "#fff", padding: "8px", fontFamily: "DungGeunMo, monospace", fontSize: "12px", boxSizing: "border-box" }}>
+                                    <div style={{ marginTop: "4px", minHeight: "100px", maxHeight: "150px", overflowY: "auto", backgroundColor: "#fff", border: "2px solid", borderTopColor: "#888", borderLeftColor: "#888", borderBottomColor: "#fff", borderRightColor: "#fff", padding: "8px", fontFamily: "DungGeunMo, monospace", fontSize: "12px", boxSizing: "border-box" }}>
                                         {searchQuery.trim() === "" ? (
                                             <span style={{ color: "#888" }}>Waiting for input...</span>
                                         ) : searchResults.length === 0 ? (
