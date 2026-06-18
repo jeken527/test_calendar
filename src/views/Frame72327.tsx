@@ -594,7 +594,7 @@ const Frame72327 = () => {
                     <div style={{ width: "280px" }} onClick={(e) => e.stopPropagation()}>
                         <div className="stroke-wrapper-120_147" style={{ height: "auto", minHeight: "200px" }}>
                             <div className="Pixso-frame-120_147" style={{ justifyContent: "flex-start", height: "auto" }}>
-                                <div className="frame-content-120_147" style={{ alignItems: "stretch", padding: "12px" }}>
+                                <div className="frame-content-120_147" style={{ alignItems: "stretch", padding: "6px" }}>
                                     
                                     <div id="119_132" className="Pixso-frame-119_132" style={{ width: "100%" }}>
                                         <div className="frame-content-119_132" style={{ width: "100%", display: "flex", justifyContent: "space-between" }}>
